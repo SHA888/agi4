@@ -27,7 +27,7 @@ Project task tracking for AGI/4 attestation protocol reference runner.
 | 1.12 | Implement Markdown report renderer in `agi4-report` | `render()` function produces valid Markdown, snapshot test passes | 1.10 | cc:done [b06b876] |
 | 1.13 | Create `agi4` facade crate with curated public API | `lib.rs` re-exports work, `cargo test -p agi4` passes | 1.3, 1.10, 1.12 | cc:done [6bcede5] |
 | 1.14 | Implement CLI binary with subcommands (attest --fixture, render, schema, version) | `cargo run -- attest --model example --fixture ./tests/fixtures/example/` produces valid JSON | 1.13 | cc:done [f13cdba] |
-| 1.15 | End-to-end integration test with frozen fixture | CLI produces valid verdict JSON against frozen fixture data | 1.14 | cc:TODO |
+| 1.15 | End-to-end integration test with frozen fixture | CLI produces valid verdict JSON against frozen fixture data | 1.14 | cc:done [ba58267] |
 | 1.16 | Set up CI pipeline (fmt, clippy, test, semver-check, audit, deny) | `.github/workflows/ci.yml` passes all checks on every commit | 1.7, 1.14 | cc:TODO |
 | 1.17 | Add adapter fixture validation step to CI | CI fails if any adapter lacks fixture or round-trip test | 1.9, 1.16 | cc:TODO |
 | 1.18 | Verify `cargo install --path crates/agi4` works locally | Binary installs and `agi4 version` returns `0.1.0` | 1.14 | cc:TODO |
