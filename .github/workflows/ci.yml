@@ -80,6 +80,40 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo test -p agi4-adapters --tests
 
+  adapter-fixture-validation:
+    name: Adapter Fixture Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify each adapter has fixtures and tests
+        run: |
+          set -e
+          # Check that METR adapter has fixtures
+          if [ ! -d "runner/tests/fixtures/metr" ]; then
+            echo "ERROR: METR adapter missing fixtures directory"
+            exit 1
+          fi
+          if [ ! -f "runner/tests/fixtures/metr/time-horizon-168h.json" ]; then
+            echo "ERROR: METR adapter missing fixture file"
+            exit 1
+          fi
+          # Verify fixture file is valid JSON
+          if ! jq . runner/tests/fixtures/metr/time-horizon-168h.json > /dev/null 2>&1; then
+            echo "ERROR: METR fixture is not valid JSON"
+            exit 1
+          fi
+          # Check that metr.rs exists
+          if [ ! -f "runner/crates/agi4-adapters/src/metr.rs" ]; then
+            echo "ERROR: METR adapter source file missing"
+            exit 1
+          fi
+          # Check for round-trip test in metr.rs
+          if ! grep -q "fn metr_round_trip" runner/crates/agi4-adapters/src/metr.rs; then
+            echo "ERROR: METR adapter missing round-trip test"
+            exit 1
+          fi
+          echo "✓ All adapters have fixtures and round-trip tests"
+
   spec-traceability:
     name: Spec-to-Code Traceability
     runs-on: ubuntu-latest
@@ -97,7 +131,7 @@ jobs:
 
   all-checks-pass:
     name: All Checks Pass
-    needs: [format, lint, test, semver, security-audit, deny, schema-validation, adapter-fixtures, spec-traceability]
+    needs: [format, lint, test, semver, security-audit, deny, schema-validation, adapter-fixtures, adapter-fixture-validation, spec-traceability]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -111,6 +145,7 @@ jobs:
                 "${{ needs.deny.result }}" != "success" || \
                 "${{ needs.schema-validation.result }}" != "success" || \
                 "${{ needs.adapter-fixtures.result }}" != "success" || \
+                "${{ needs.adapter-fixture-validation.result }}" != "success" || \
                 "${{ needs.spec-traceability.result }}" != "success" ]]; then
             echo "One or more checks failed"
             exit 1
