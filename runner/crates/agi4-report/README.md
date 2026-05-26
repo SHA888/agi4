@@ -49,7 +49,7 @@ All four conjuncts pass with consistent evidence.
 ...
 
 ## Consistency Check
-Status: **PASS**  
+Status: **PASS**
 Margins: Min 0.85, Max 0.90 (ratio 0.944 > 0.5) ✓
 
 ## Known Gaps

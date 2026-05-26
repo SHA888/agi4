@@ -2,7 +2,7 @@
 
 Project task tracking for AGI/4 attestation protocol reference runner.
 
-**Created:** 2026-05-26  
+**Created:** 2026-05-26
 **Current Phase:** v0.1.0 (Scaffold and first verdict)
 
 ---
