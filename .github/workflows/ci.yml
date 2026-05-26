@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  format:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo fmt --check --all
+
+  lint:
+    name: Clippy Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo clippy --all-targets --all-features -- -D warnings
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test --workspace
+
+  semver:
+    name: SemVer Check (agi4-core)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo semver-checks --package agi4-core
+
+  security-audit:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rustsec/audit-check-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  deny:
+    name: Cargo Deny
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v1
+
+  schema-validation:
+    name: Schema Drift Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test -p agi4-schema --tests -- --nocapture
+
+  adapter-fixtures:
+    name: Adapter Fixture Round-trips
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo test -p agi4-adapters --tests
+
+  spec-traceability:
+    name: Spec-to-Code Traceability
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify threshold constants are referenced
+        run: |
+          # Check that every threshold constant in threshold.rs is referenced in evaluations
+          grep -oP 'pub const \K\w+' crates/agi4-core/src/threshold.rs | while read const; do
+            if ! grep -r "$const" crates/agi4-core/src/*.rs | grep -qv "pub const"; then
+              echo "ERROR: Threshold constant $const is not referenced in evaluation code"
+              exit 1
+            fi
+          done
+
+  all-checks-pass:
+    name: All Checks Pass
+    needs: [format, lint, test, semver, security-audit, deny, schema-validation, adapter-fixtures, spec-traceability]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Decide based on results
+        run: |
+          if [[ "${{ needs.format.result }}" != "success" || \
+                "${{ needs.lint.result }}" != "success" || \
+                "${{ needs.test.result }}" != "success" || \
+                "${{ needs.semver.result }}" != "success" || \
+                "${{ needs.security-audit.result }}" != "success" || \
+                "${{ needs.deny.result }}" != "success" || \
+                "${{ needs.schema-validation.result }}" != "success" || \
+                "${{ needs.adapter-fixtures.result }}" != "success" || \
+                "${{ needs.spec-traceability.result }}" != "success" ]]; then
+            echo "One or more checks failed"
+            exit 1
+          fi
+          echo "All checks passed!"
