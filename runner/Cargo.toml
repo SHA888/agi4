@@ -13,7 +13,7 @@ version = "0.1.0"
 edition = "2024"
 authors = ["AGI/4 Contributors"]
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/anthropics/agi4"
+repository = "https://github.com/SHA888/agi4"
 description = "AGI/4 attestation protocol and reference runner"
 
 [profile.release]
