@@ -152,8 +152,7 @@ fn check_variance_bound(
     let min_margin = margins.iter().cloned().fold(f64::INFINITY, f64::min);
     let max_margin = margins.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
 
-    const VARIANCE_RATIO: f64 = 0.5;
-    if min_margin < VARIANCE_RATIO * max_margin {
+    if min_margin < threshold::consistency::MARGIN_VARIANCE_RATIO * max_margin {
         return Err(format!(
             "Variance bound violated: min_margin ({:.3}) < 0.5 * max_margin ({:.3})",
             min_margin, max_margin
