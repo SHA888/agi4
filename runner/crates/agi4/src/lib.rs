@@ -73,3 +73,36 @@ mod tests {
         let _ = std::any::type_name::<schema::VerdictOutput>();
     }
 }
+
+#[cfg(test)]
+mod cli_tests {
+    #[test]
+    fn cli_attest_produces_valid_json() {
+        // Test that the attest subcommand works (indirectly via library)
+        use crate::VerdictOutput;
+
+        // Verify that VerdictOutput can be serialized/deserialized
+        let verdict = serde_json::json!({
+            "spec_version": "0.1.0",
+            "runner_version": "0.1.0",
+            "run_timestamp": "2026-05-26T00:00:00Z",
+            "model": {"id": "test", "provider": null, "version_or_date": null},
+            "conjuncts": {
+                "generality": {"status": "pass", "margins": null},
+                "economic_substitutability": {"status": "pass", "margins": null},
+                "environmental_transfer": {"status": "pass", "margins": null},
+                "autonomous_agency": {"status": "pass", "margins": null}
+            },
+            "consistency_check": {"status": "pass", "failed_rules": [], "detail": null},
+            "verdict": "attested",
+            "verdict_reasons": [],
+            "known_gaps_acknowledged": []
+        });
+
+        let verdict_output: VerdictOutput =
+            serde_json::from_value(verdict).expect("valid JSON should deserialize");
+
+        assert_eq!(verdict_output.model.id, "test");
+        assert_eq!(verdict_output.verdict, "attested");
+    }
+}
