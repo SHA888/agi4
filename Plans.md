@@ -19,7 +19,7 @@ Project task tracking for AGI/4 attestation protocol reference runner.
 | 1.4 | Implement per-conjunct evaluation functions (generality, economic_substitutability, environmental_transfer, autonomous_agency) | All four evaluation functions compile and unit tests pass | 1.3 | cc:done [2d0b679] |
 | 1.5 | Implement consistency check logic (all three sub-rules from SPEC.md §4) | `consistency_check` function total, all sub-rules tested | 1.3 | cc:done [57c918e] |
 | 1.6 | Implement verdict function (pure, total, spec-compliant) | `verdict()` is total (no panics), exhaustive verdict table test passes | 1.4, 1.5 | cc:done [1d64c29] |
-| 1.7 | Implement verdict invariant property tests | Property tests assert verdict is total, exhaustive 512-case test passes | 1.6 | cc:TODO |
+| 1.7 | Implement verdict invariant property tests | Property tests assert verdict is total, exhaustive 512-case test passes | 1.6 | cc:done [3315ed9] |
 | 1.8 | Implement `Source` trait and `Fetcher` abstraction in `agi4-adapters` | Trait compiles, in-memory test fetcher works | 1.1 | cc:TODO |
 | 1.9 | Implement METR reference adapter (simplest schema) | Adapter parses frozen METR fixture, round-trip test passes | 1.8 | cc:TODO |
 | 1.10 | Define output JSON types in `agi4-schema` | `VerdictOutput`, `ConjunctReport` types serialize/deserialize | 1.1 | cc:TODO |
