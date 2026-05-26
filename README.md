@@ -2,7 +2,7 @@
 
 **AGI/4 Conjunct Attestation Protocol — integration layer, thin spec, mechanical verdict.**
 
-agi4 is a public, versioned specification for attesting whether an AI system clears the AGI/4 threshold, plus a reference runner that ingests publicly available upstream benchmark data and emits a mechanical verdict.
+AGI/4 is a public, versioned specification for attesting whether an AI system clears the AGI/4 threshold, plus a reference runner that ingests publicly available upstream benchmark data and emits a mechanical verdict.
 
 It is an **integration layer**, not a benchmark. It does not run evaluations. It does not produce capability measurements. It composes existing, independently credible measurements from upstream sources into a single conjunct-by-conjunct status and a binary verdict.
 
@@ -23,18 +23,18 @@ The conjunction is strict by construction. Failing any single conjunct fails the
 
 ---
 
-## What agi4 is
+## What AGI/4 is
 
 - A **specification** (`SPEC.md`) that defines, for each conjunct: which upstream benchmarks count, what the threshold is, at what reliability percentile, with what refresh cadence.
 - A **reference runner** (`/runner`) that fetches publicly available upstream data, applies the spec mechanically, and emits a schema-validated JSON verdict plus a human-readable Markdown report.
 - A **versioning discipline** (SemVer) that makes the spec itself a load-bearing, forkable artifact. Disagreements with the verdict are resolved by forking the spec, not by litigating the measurement.
 
-## What agi4 is not
+## What AGI/4 is not
 
-- **Not a benchmark.** agi4 does not run models, score outputs, or produce capability measurements. It composes existing ones.
+- **Not a benchmark.** AGI/4 does not run models, score outputs, or produce capability measurements. It composes existing ones.
 - **Not a safety standard.** Alignment, deployment risk, misuse potential, and compute thresholds are out of scope.
-- **Not an institution.** agi4 has no governance body, no certification authority, no legal standing. It is a spec and a runner. Adoption is voluntary; verdicts are advisory.
-- **Not authoritative.** A passing agi4 verdict means "the upstream measurements, composed under spec version X.Y.Z, attest the conjuncts." It does not mean "this system is AGI" in any ontological sense. The spec is a tool; the noun "AGI" remains contested.
+- **Not an institution.** AGI/4 has no governance body, no certification authority, no legal standing. It is a spec and a runner. Adoption is voluntary; verdicts are advisory.
+- **Not authoritative.** A passing AGI/4 verdict means "the upstream measurements, composed under spec version X.Y.Z, attest the conjuncts." It does not mean "this system is AGI" in any ontological sense. The spec is a tool; the noun "AGI" remains contested.
 
 ---
 
@@ -75,7 +75,7 @@ A human-readable Markdown report renders the same data with provenance links to 
 
 ## Design principles
 
-- **Integration, not reinvention.** Upstream sources (ARC Prize, METR, Epoch AI, OpenAI GDPval, Artificial Analysis, others as specified) do the measurement work. agi4 composes their outputs.
+- **Integration, not reinvention.** Upstream sources (ARC Prize, METR, Epoch AI, OpenAI GDPval, Artificial Analysis, others as specified) do the measurement work. AGI/4 composes their outputs.
 - **Thin spec.** The spec encodes only what's load-bearing: conjunct definitions, upstream source list, thresholds, reliability percentiles, consistency check, refresh cadence. Everything else is out of scope.
 - **Mechanical verdict.** No subjective calls inside the runner. Disagreements push back to "the spec is wrong" or "the upstream data is wrong" — both falsifiable.
 - **Forkable by design.** The spec is CC BY 4.0. Forking is anticipated and welcomed. If you disagree with a threshold or a source choice, fork the spec, not the data.
@@ -134,9 +134,9 @@ agi4/
 
 ## Citing
 
-When citing agi4, include the spec version (SemVer) you are referencing. Verdicts issued under different spec versions are not directly comparable.
+When citing AGI/4, include the spec version (SemVer) you are referencing. Verdicts issued under different spec versions are not directly comparable.
 
-> agi4 specification, version X.Y.Z. <repository URL>.
+> AGI/4 specification, version X.Y.Z. <repository URL>.
 
 ---
 
