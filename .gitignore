@@ -1,0 +1,16 @@
+# Rust
+/target/
+Cargo.lock
+**/*.rs.bk
+
+# Claude Code
+.claude/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
