@@ -1,7 +1,16 @@
 # Rust
 /target/
+/runner/target/
 Cargo.lock
 **/*.rs.bk
+*.rlib
+*.rmeta
+*.so
+*.dylib
+*.dll
+.cargo/
+**/*.profraw
+**/*.profdata
 
 # Claude Code
 .claude/
