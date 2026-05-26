@@ -39,17 +39,23 @@ Project task tracking for AGI/4 attestation protocol reference runner.
 
 **Goal:** Implement all nine upstream source adapters, run first live attestation, commit verdicts.
 
+**Tracked issues** ([milestone v0.1.1](https://github.com/SHA888/agi4/milestone/1)):
+- [#1](https://github.com/SHA888/agi4/issues/1) — Source-ID drift between SWE-bench evaluator and consistency check (blocks Task 2.9)
+- [#2](https://github.com/SHA888/agi4/issues/2) — `evaluate_environmental_transfer` treats NES more permissively than SPEC.md §2.3
+
 | Task | Scope | DoD | Depends | Status |
 |------|-------|-----|---------|--------|
-| 2.1 | Implement ARC Prize adapter (ARC-AGI-2, ARC-AGI-3) | Adapter parses leaderboard data, emits evidence for Generality and EnvironmentalTransfer | 1.9 | cc:TODO |
-| 2.2 | Implement HLE adapter | Adapter round-trip test passes with frozen fixture | 1.9 | cc:TODO |
-| 2.3 | Implement GPQA Diamond adapter | Adapter round-trip test passes | 1.9 | cc:TODO |
-| 2.4 | Implement GDPval/GDPval-AA adapter | Adapter round-trip test passes (prefer Artificial Analysis source) | 1.9 | cc:TODO |
-| 2.5 | Implement RLI adapter | Adapter round-trip test passes | 1.9 | cc:TODO |
-| 2.6 | Implement APEX-Agents adapter | Adapter round-trip test passes | 1.9 | cc:TODO |
-| 2.7 | Implement OSWorld adapter | Adapter round-trip test passes | 1.9 | cc:TODO |
-| 2.8 | Implement RE-Bench adapter | Adapter round-trip test passes | 1.9 | cc:TODO |
-| 2.9 | Implement SWE-bench Verified pass@5 adapter | Adapter rejects pass@1-only, round-trip test passes | 1.9 | cc:TODO |
+| 2.0a | Centralize source-ID constants in `agi4-core`, consume from evaluators + consistency check ([#1](https://github.com/SHA888/agi4/issues/1)) | One canonical `SourceId` per upstream source; both code paths reference the same constant | 1.9 | cc:TODO |
+| 2.0b | Tighten `evaluate_environmental_transfer` NES handling to match SPEC.md §2.3 ([#2](https://github.com/SHA888/agi4/issues/2)) | NES alone cannot move conjunct to Pass under v0.1.x; unit test added | 1.9 | cc:TODO |
+| 2.1 | Implement ARC Prize adapter (ARC-AGI-2, ARC-AGI-3) | Adapter parses leaderboard data, emits evidence for Generality and EnvironmentalTransfer | 2.0a | cc:TODO |
+| 2.2 | Implement HLE adapter | Adapter round-trip test passes with frozen fixture | 2.0a | cc:TODO |
+| 2.3 | Implement GPQA Diamond adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
+| 2.4 | Implement GDPval/GDPval-AA adapter | Adapter round-trip test passes (prefer Artificial Analysis source) | 2.0a | cc:TODO |
+| 2.5 | Implement RLI adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
+| 2.6 | Implement APEX-Agents adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
+| 2.7 | Implement OSWorld adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
+| 2.8 | Implement RE-Bench adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
+| 2.9 | Implement SWE-bench Verified pass@5 adapter ([#1](https://github.com/SHA888/agi4/issues/1)) | Adapter rejects pass@1-only, round-trip test passes | 2.0a | cc:TODO |
 | 2.10 | Wire `attest --live` to fetch upstream sources concurrently | `cargo run -- attest --model example --live` fetches with timeout and retry | 2.1-2.9 | cc:TODO |
 | 2.11 | Add cache layer (local filesystem) to avoid hammering upstream | Cache hit/miss behavior tested, concurrent fetches deduplicate | 2.10 | cc:TODO |
 | 2.12 | Run first live attestation on a frontier model | Verdict JSON + Markdown report committed to `attestations/v0.1.0/<model>-<date>.{json,md}` | 2.11 | cc:TODO |
