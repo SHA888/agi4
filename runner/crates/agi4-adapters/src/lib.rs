@@ -4,6 +4,8 @@
 //! and evidence conversion. The Fetcher trait handles I/O (HTTP, file, in-memory).
 //! Adapters are testable in isolation against frozen JSON fixtures.
 
+pub mod metr;
+
 use agi4_core::evidence::{Evidence, SourceId};
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
