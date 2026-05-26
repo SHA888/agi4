@@ -24,7 +24,7 @@ Project task tracking for AGI/4 attestation protocol reference runner.
 | 1.9 | Implement METR reference adapter (simplest schema) | Adapter parses frozen METR fixture, round-trip test passes | 1.8 | cc:done [6e5b85e] |
 | 1.10 | Define output JSON types in `agi4-schema` | `VerdictOutput`, `ConjunctReport` types serialize/deserialize | 1.1 | cc:done [04fdbc2] |
 | 1.11 | Implement JSON schema export and validation | `schemars` generates schema, schema drift check works in CI | 1.10 | cc:done [36e81f7] |
-| 1.12 | Implement Markdown report renderer in `agi4-report` | `render()` function produces valid Markdown, snapshot test passes | 1.10 | cc:TODO |
+| 1.12 | Implement Markdown report renderer in `agi4-report` | `render()` function produces valid Markdown, snapshot test passes | 1.10 | cc:done [b06b876] |
 | 1.13 | Create `agi4` facade crate with curated public API | `lib.rs` re-exports work, `cargo test -p agi4` passes | 1.3, 1.10, 1.12 | cc:TODO |
 | 1.14 | Implement CLI binary with subcommands (attest --fixture, render, schema, version) | `cargo run -- attest --model example --fixture ./tests/fixtures/example/` produces valid JSON | 1.13 | cc:TODO |
 | 1.15 | End-to-end integration test with frozen fixture | CLI produces valid verdict JSON against frozen fixture data | 1.14 | cc:TODO |
