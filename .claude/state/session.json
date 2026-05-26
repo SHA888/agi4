@@ -1,0 +1,44 @@
+{
+  "changes_this_session": [],
+  "cwd": "/home/kresna/agi4",
+  "duration_minutes": 0,
+  "ended_at": "2026-05-26T09:40:14Z",
+  "event_seq": 14,
+  "fork_count": 0,
+  "git": {
+    "branch": "unknown",
+    "last_commit": "none",
+    "uncommitted_changes": 0
+  },
+  "harness_mem": {
+    "healthy": false,
+    "last_checked": "2026-05-26T09:40:10Z",
+    "last_error": "daemon-unreachable"
+  },
+  "intent": "literal",
+  "last_event_id": "event-000014",
+  "last_message_hash": "7cd17f1c33482fed",
+  "last_message_length": 222,
+  "memory_logged": true,
+  "orchestration": {
+    "max_state_retries": 3,
+    "retry_backoff_seconds": 10
+  },
+  "parent_session_id": null,
+  "plans": {
+    "completed_tasks": 0,
+    "exists": false,
+    "last_modified": 0,
+    "pending_tasks": 0,
+    "todo_tasks": 0,
+    "wip_tasks": 0
+  },
+  "project_name": "agi4",
+  "prompt_seq": 8,
+  "resume_token": "resume-1779788411100717585",
+  "session_id": "session-1779788411100714448",
+  "started_at": "2026-05-26T09:40:10Z",
+  "state": "stopped",
+  "state_version": 1,
+  "updated_at": "2026-05-26T09:46:54Z"
+}

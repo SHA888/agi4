@@ -1,0 +1,11 @@
+PLACEHOLDER — fetch and replace verbatim before repo publication.
+
+Source: https://www.apache.org/licenses/LICENSE-2.0.txt
+
+This file must contain the full, verbatim text of the Apache License,
+Version 2.0, retrieved from the canonical Apache Software Foundation
+source above.
+
+Do not paraphrase, summarize, or modify the license text.
+
+Tracked in TODO.md under "Commit license files verbatim" in milestone v0.1.0.

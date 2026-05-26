@@ -1,0 +1,11 @@
+PLACEHOLDER — fetch and replace verbatim before repo publication.
+
+Source: https://creativecommons.org/licenses/by/4.0/legalcode.txt
+
+This file must contain the full, verbatim text of the Creative Commons
+Attribution 4.0 International Public License (CC BY 4.0), retrieved from
+the canonical Creative Commons source above.
+
+Do not paraphrase, summarize, or modify the license text.
+
+Tracked in TODO.md under "Commit license files verbatim" in milestone v0.1.0.

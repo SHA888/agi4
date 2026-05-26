@@ -1,0 +1,24 @@
+agi4 — AGI/4 Conjunct Attestation Protocol
+
+This repository contains two artifacts under two licenses:
+
+1. Specification (./spec/, ./SPEC.md, ./README.md, ./ARCHITECTURE.md)
+   Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+   See LICENSE-SPEC for the full text.
+
+   Attribution requirement: when citing or building upon the spec,
+   credit "agi4 specification" with a link to the source repository
+   and the spec version (SemVer) being referenced.
+
+2. Reference runner (./runner/, all Rust source code)
+   Dual-licensed under MIT OR Apache-2.0 at the recipient's option.
+   See LICENSE-MIT and LICENSE-APACHE for the full texts.
+
+Forks of either artifact are explicitly anticipated and welcomed.
+The integration layer is forkable by design; disagreements with the
+spec should be expressed by forking the spec, not by forking the data.
+
+Upstream data sources (ARC Prize, METR, Epoch AI, OpenAI GDPval,
+Artificial Analysis, etc.) retain their own licenses and terms of use.
+The runner ingests publicly available outputs from these sources;
+it does not redistribute their underlying datasets or methodology.
