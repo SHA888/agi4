@@ -285,3 +285,147 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod property_tests {
+    use super::*;
+
+    #[test]
+    fn property_verdict_deterministic_on_repeated_calls() {
+        let statuses = [
+            ConjunctStatus::Pass,
+            ConjunctStatus::Partial,
+            ConjunctStatus::Fail,
+            ConjunctStatus::InsufficientData,
+        ];
+        let v1 = verdict(&statuses, true);
+        let v2 = verdict(&statuses, true);
+        let v3 = verdict(&statuses, true);
+        let d1 = format!("{:?}", v1);
+        let d2 = format!("{:?}", v2);
+        let d3 = format!("{:?}", v3);
+        assert_eq!(d1, d2);
+        assert_eq!(d2, d3);
+    }
+
+    #[test]
+    fn property_verdict_fail_always_not_attested() {
+        let status_options = vec![
+            ConjunctStatus::Pass,
+            ConjunctStatus::Partial,
+            ConjunctStatus::Fail,
+            ConjunctStatus::InsufficientData,
+        ];
+        for e in &status_options {
+            for env in &status_options {
+                for a in &status_options {
+                    let statuses = [ConjunctStatus::Fail, *e, *env, *a];
+                    let v = verdict(&statuses, true);
+                    assert!(matches!(v, Verdict::NotAttested { .. }));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn property_verdict_partial_dominates_insufficient() {
+        let status_options = vec![
+            ConjunctStatus::Pass,
+            ConjunctStatus::Partial,
+            ConjunctStatus::InsufficientData,
+        ];
+        for e in &status_options {
+            for env in &status_options {
+                for a in &status_options {
+                    let statuses = [ConjunctStatus::Partial, *e, *env, *a];
+                    let v = verdict(&statuses, true);
+                    assert!(matches!(v, Verdict::NotAttested { .. }));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn property_verdict_insufficient_only_without_fail_partial() {
+        let status_options = vec![ConjunctStatus::Pass, ConjunctStatus::InsufficientData];
+        for e in &status_options {
+            for env in &status_options {
+                for a in &status_options {
+                    for consistency in &[true, false] {
+                        let statuses = [ConjunctStatus::Pass, *e, *env, *a];
+                        let v = verdict(&statuses, *consistency);
+                        let has_insufficient = [*e, *env, *a]
+                            .iter()
+                            .any(|s| *s == ConjunctStatus::InsufficientData);
+                        if has_insufficient {
+                            assert!(matches!(v, Verdict::InsufficientData { .. }));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn property_verdict_all_pass_requires_consistency() {
+        for consistency in &[true, false] {
+            let statuses = [
+                ConjunctStatus::Pass,
+                ConjunctStatus::Pass,
+                ConjunctStatus::Pass,
+                ConjunctStatus::Pass,
+            ];
+            let v = verdict(&statuses, *consistency);
+            if *consistency {
+                assert!(matches!(v, Verdict::Attested));
+            } else {
+                assert!(matches!(v, Verdict::NotAttested { .. }));
+            }
+        }
+    }
+
+    #[test]
+    fn property_verdict_not_attested_always_has_reasons() {
+        let status_options = vec![
+            ConjunctStatus::Pass,
+            ConjunctStatus::Partial,
+            ConjunctStatus::Fail,
+            ConjunctStatus::InsufficientData,
+        ];
+        for g in &status_options {
+            for e in &status_options {
+                for env in &status_options {
+                    for a in &status_options {
+                        for consistency in &[true, false] {
+                            let statuses = [*g, *e, *env, *a];
+                            let v = verdict(&statuses, *consistency);
+                            if let Verdict::NotAttested { reasons } = v {
+                                assert!(!reasons.is_empty(), "NotAttested must have reasons");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn property_verdict_insufficient_always_has_missing() {
+        let status_options = vec![ConjunctStatus::Pass, ConjunctStatus::InsufficientData];
+        for g in &status_options {
+            for e in &status_options {
+                for env in &status_options {
+                    for a in &status_options {
+                        for consistency in &[true, false] {
+                            let statuses = [*g, *e, *env, *a];
+                            let v = verdict(&statuses, *consistency);
+                            if let Verdict::InsufficientData { missing } = v {
+                                assert!(!missing.is_empty(), "InsufficientData must have missing");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

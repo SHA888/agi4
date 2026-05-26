@@ -1,4 +1,4 @@
-# agi4
+# AGI/4
 
 **AGI/4 Conjunct Attestation Protocol — integration layer, thin spec, mechanical verdict.**
 
@@ -48,10 +48,10 @@ Per attestation run, the runner emits a JSON object with this shape (illustrativ
   "run_timestamp": "2026-Q2",
   "model": "example-model-v1",
   "conjuncts": {
-    "generality":               { "status": "partial", "evidence": [] },
-    "economic_substitutability":{ "status": "partial", "evidence": [] },
-    "environmental_transfer":   { "status": "fail",    "evidence": [] },
-    "autonomous_agency":        { "status": "partial", "evidence": [] }
+    "generality": { "status": "partial", "evidence": [] },
+    "economic_substitutability": { "status": "partial", "evidence": [] },
+    "environmental_transfer": { "status": "fail", "evidence": [] },
+    "autonomous_agency": { "status": "partial", "evidence": [] }
   },
   "consistency_check": "pass",
   "verdict": "not_attested",
@@ -86,11 +86,13 @@ A human-readable Markdown report renders the same data with provenance links to 
 ## Scope boundaries
 
 Strictly in scope:
+
 - AGI/4 conjunct attestation as defined in `SPEC.md`
 - Ingestion of publicly available upstream benchmark data
 - Mechanical verdict emission with provenance
 
 Strictly out of scope:
+
 - AI safety evaluation
 - Alignment claims
 - Deployment risk assessment
