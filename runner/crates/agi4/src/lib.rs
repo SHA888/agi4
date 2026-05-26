@@ -5,9 +5,9 @@
 
 // Re-export core types
 pub use agi4_core::conjunct::{Conjunct, ConjunctStatus};
-pub use agi4_core::evidence::{Evidence, SourceId, MeasurementId};
-pub use agi4_core::verdict::Verdict;
+pub use agi4_core::evidence::{Evidence, MeasurementId, SourceId};
 pub use agi4_core::threshold;
+pub use agi4_core::verdict::Verdict;
 
 // Re-export schema types
 pub use agi4_schema::VerdictOutput;

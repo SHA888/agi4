@@ -5,9 +5,9 @@
 //! returns a verdict with no panics or side effects.
 
 pub mod conjunct;
+pub mod consistency;
 pub mod evidence;
 pub mod threshold;
-pub mod consistency;
 pub mod verdict;
 
 pub use conjunct::{Conjunct, ConjunctStatus};

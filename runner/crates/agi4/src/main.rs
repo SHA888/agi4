@@ -44,14 +44,21 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Attest { model, fixture, live } => {
+        Commands::Attest {
+            model,
+            fixture,
+            live,
+        } => {
             if live {
                 eprintln!("Error: live attestation not yet wired (v0.1.0 stub)");
                 std::process::exit(1);
             }
 
             if let Some(fixture_path) = fixture {
-                println!("Would attest model '{}' using fixture '{}'", model, fixture_path);
+                println!(
+                    "Would attest model '{}' using fixture '{}'",
+                    model, fixture_path
+                );
             } else {
                 eprintln!("Error: either --fixture or --live must be specified");
                 std::process::exit(1);
