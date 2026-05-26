@@ -1,0 +1,17 @@
+[package]
+name = "agi4-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Pure verdict logic for AGI/4 attestation"
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+thiserror = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
+url = { version = "2.5", features = ["serde"] }
+
+[dev-dependencies]
+proptest = "1.4"

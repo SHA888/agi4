@@ -1,0 +1,15 @@
+[package]
+name = "agi4-report"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Markdown report rendering for AGI/4 verdicts"
+
+[dependencies]
+agi4-schema = { path = "../agi4-schema" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]

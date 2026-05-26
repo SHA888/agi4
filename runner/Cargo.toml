@@ -1,0 +1,22 @@
+[workspace]
+members = [
+    "crates/agi4",
+    "crates/agi4-core",
+    "crates/agi4-schema",
+    "crates/agi4-adapters",
+    "crates/agi4-report",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["AGI/4 Contributors"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/anthropics/agi4"
+description = "AGI/4 attestation protocol and reference runner"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
