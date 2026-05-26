@@ -13,8 +13,8 @@ Project task tracking for AGI/4 attestation protocol reference runner.
 
 | Task | Scope | DoD | Depends | Status |
 |------|-------|-----|---------|--------|
-| 1.1 | Initialize Cargo workspace with five member crates | `cargo build` succeeds, `Cargo.toml` manifest exists | - | cc:完了 [f9ae554] |
-| 1.2 | Pin Rust toolchain via `rust-toolchain.toml` | Toolchain file committed, `rustc --version` matches | 1.1 | cc:完了 [7437ca6] |
+| 1.1 | Initialize Cargo workspace with five member crates | `cargo build` succeeds, `Cargo.toml` manifest exists | - | cc:done [f9ae554] |
+| 1.2 | Pin Rust toolchain via `rust-toolchain.toml` | Toolchain file committed, `rustc --version` matches | 1.1 | cc:done [7437ca6] |
 | 1.3 | Implement `agi4-core` type system (enums, bounded types) | All core types compile, `Debug`, `Clone`, `Serialize` derive work | 1.1 | cc:TODO |
 | 1.4 | Implement per-conjunct evaluation functions (generality, economic_substitutability, environmental_transfer, autonomous_agency) | All four evaluation functions compile and unit tests pass | 1.3 | cc:TODO |
 | 1.5 | Implement consistency check logic (all three sub-rules from SPEC.md §4) | `consistency_check` function total, all sub-rules tested | 1.3 | cc:TODO |
