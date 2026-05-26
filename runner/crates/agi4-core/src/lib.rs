@@ -6,11 +6,16 @@
 
 pub mod conjunct;
 pub mod consistency;
+pub mod evaluators;
 pub mod evidence;
 pub mod threshold;
 pub mod verdict;
 
 pub use conjunct::{Conjunct, ConjunctStatus};
+pub use evaluators::{
+    evaluate_autonomous_agency, evaluate_economic_substitutability,
+    evaluate_environmental_transfer, evaluate_generality,
+};
 pub use evidence::Evidence;
 pub use verdict::Verdict;
 
