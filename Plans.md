@@ -22,7 +22,7 @@ Project task tracking for AGI/4 attestation protocol reference runner.
 | 1.7 | Implement verdict invariant property tests | Property tests assert verdict is total, exhaustive 512-case test passes | 1.6 | cc:done [3315ed9] |
 | 1.8 | Implement `Source` trait and `Fetcher` abstraction in `agi4-adapters` | Trait compiles, in-memory test fetcher works | 1.1 | cc:done [34616e3] |
 | 1.9 | Implement METR reference adapter (simplest schema) | Adapter parses frozen METR fixture, round-trip test passes | 1.8 | cc:done [6e5b85e] |
-| 1.10 | Define output JSON types in `agi4-schema` | `VerdictOutput`, `ConjunctReport` types serialize/deserialize | 1.1 | cc:TODO |
+| 1.10 | Define output JSON types in `agi4-schema` | `VerdictOutput`, `ConjunctReport` types serialize/deserialize | 1.1 | cc:done [04fdbc2] |
 | 1.11 | Implement JSON schema export and validation | `schemars` generates schema, schema drift check works in CI | 1.10 | cc:TODO |
 | 1.12 | Implement Markdown report renderer in `agi4-report` | `render()` function produces valid Markdown, snapshot test passes | 1.10 | cc:TODO |
 | 1.13 | Create `agi4` facade crate with curated public API | `lib.rs` re-exports work, `cargo test -p agi4` passes | 1.3, 1.10, 1.12 | cc:TODO |
