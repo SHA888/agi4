@@ -175,6 +175,22 @@ pub struct ConsistencyCheckOutput {
     pub detail: Option<String>,
 }
 
+/// Generate the JSON schema for the AGI/4 verdict output.
+///
+/// Returns the complete JSON schema that describes the structure of VerdictOutput.
+/// This schema is committed to the repository and validated in CI to detect drift.
+pub fn generate_schema() -> schemars::schema::RootSchema {
+    schemars::schema_for!(VerdictOutput)
+}
+
+/// Serialize the JSON schema to a pretty-printed JSON string.
+///
+/// Used for both CLI output and schema validation in CI.
+pub fn schema_json_string() -> Result<String, serde_json::Error> {
+    let schema = generate_schema();
+    serde_json::to_string_pretty(&schema)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -421,5 +437,33 @@ mod tests {
         // Empty vecs should not be serialized
         assert!(!json.contains("\"verdict_reasons\":[]"));
         assert!(!json.contains("\"known_gaps_acknowledged\":[]"));
+    }
+
+    #[test]
+    fn schema_drift_check() {
+        // Load the committed schema file
+        let committed_schema_str = include_str!("../../../../schema/agi4-output-v0.1.0.json");
+        let committed_schema: serde_json::Value = serde_json::from_str(committed_schema_str)
+            .expect("committed schema should be valid JSON");
+
+        // Generate schema from current code
+        let generated_schema = schemars::schema_for!(VerdictOutput);
+        let generated_json = serde_json::to_value(&generated_schema)
+            .expect("generated schema should serialize to JSON");
+
+        // Compare: if they don't match, schema has drifted
+        if committed_schema != generated_json {
+            // For debugging, show the diff
+            let committed_pretty =
+                serde_json::to_string_pretty(&committed_schema).unwrap_or_default();
+            let generated_pretty =
+                serde_json::to_string_pretty(&generated_json).unwrap_or_default();
+
+            panic!(
+                "Schema drift detected!\n\nCommitted schema:\n{}\n\nGenerated schema:\n{}\n\n\
+                 To fix, run: `cargo run -p agi4 -- schema > schema/agi4-output-v0.1.0.json`",
+                committed_pretty, generated_pretty
+            );
+        }
     }
 }

@@ -67,9 +67,13 @@ fn main() {
         Commands::Render { input } => {
             println!("Would render verdict from '{}'", input);
         }
-        Commands::Schema => {
-            println!("Schema command (to be implemented in v0.1.0)");
-        }
+        Commands::Schema => match agi4_schema::schema_json_string() {
+            Ok(json) => println!("{}", json),
+            Err(e) => {
+                eprintln!("Error generating schema: {}", e);
+                std::process::exit(1);
+            }
+        },
         Commands::Version => {
             println!("agi4 {}", agi4::VERSION);
             println!("spec version {}", agi4::SPEC_VERSION);

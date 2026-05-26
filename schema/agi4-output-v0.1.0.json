@@ -1,0 +1,320 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VerdictOutput",
+  "description": "The top-level verdict output JSON.\n\nContains the complete verdict result with evidence, consistency check results, and verdict reasons. Serializes to JSON matching ARCHITECTURE.md §7 schema.",
+  "type": "object",
+  "required": [
+    "conjuncts",
+    "consistency_check",
+    "model",
+    "run_timestamp",
+    "runner_version",
+    "spec_version",
+    "verdict"
+  ],
+  "properties": {
+    "conjuncts": {
+      "description": "Per-conjunct evaluation results.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/ConjunctsOutput"
+        }
+      ]
+    },
+    "consistency_check": {
+      "description": "Cross-conjunct consistency check result.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/ConsistencyCheckOutput"
+        }
+      ]
+    },
+    "known_gaps_acknowledged": {
+      "description": "Known gaps in the specification and measurements.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "model": {
+      "description": "Model being evaluated.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/ModelMetadata"
+        }
+      ]
+    },
+    "run_timestamp": {
+      "description": "ISO 8601 timestamp of verdict computation.",
+      "type": "string"
+    },
+    "runner_version": {
+      "description": "Runner version (SemVer).",
+      "type": "string"
+    },
+    "spec_version": {
+      "description": "AGI/4 specification version (SemVer).",
+      "type": "string"
+    },
+    "verdict": {
+      "description": "The final verdict: \"attested\", \"not_attested\", or \"insufficient_data\".",
+      "type": "string"
+    },
+    "verdict_reasons": {
+      "description": "Reasons why verdict is not attested (if applicable).",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "definitions": {
+    "ConjunctReport": {
+      "description": "Output for a single conjunct (aliased as ConjunctReport per DoD).\n\nReports the evaluation status, evidence, and margin information for a conjunct.",
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "evidence": {
+          "description": "Evidence from upstream sources contributing to this conjunct.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/EvidenceReport"
+          }
+        },
+        "margins": {
+          "description": "Min/max margin information (used by consistency check).",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/MarginReport"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "status": {
+          "description": "Conjunct status: \"pass\", \"partial\", \"fail\", or \"insufficient_data\".",
+          "type": "string"
+        }
+      }
+    },
+    "ConjunctsOutput": {
+      "description": "Output for all four conjuncts.",
+      "type": "object",
+      "required": [
+        "autonomous_agency",
+        "economic_substitutability",
+        "environmental_transfer",
+        "generality"
+      ],
+      "properties": {
+        "autonomous_agency": {
+          "description": "Autonomous agency conjunct evaluation.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ConjunctReport"
+            }
+          ]
+        },
+        "economic_substitutability": {
+          "description": "Economic substitutability conjunct evaluation.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ConjunctReport"
+            }
+          ]
+        },
+        "environmental_transfer": {
+          "description": "Environmental transfer conjunct evaluation.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ConjunctReport"
+            }
+          ]
+        },
+        "generality": {
+          "description": "Generality conjunct evaluation.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ConjunctReport"
+            }
+          ]
+        }
+      }
+    },
+    "ConsistencyCheckOutput": {
+      "description": "Consistency check result.",
+      "type": "object",
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "detail": {
+          "description": "Human-readable detail on why check failed.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "failed_rules": {
+          "description": "Which sub-rules failed (e.g., \"margin_variance_ratio\").",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "description": "Check status: \"pass\" or \"fail\".",
+          "type": "string"
+        }
+      }
+    },
+    "EvidenceReport": {
+      "description": "Evidence report with threshold comparison information.\n\nWraps Evidence with computed threshold and floor comparisons.",
+      "type": "object",
+      "required": [
+        "measurement",
+        "provenance",
+        "reliability_percentile",
+        "source",
+        "value"
+      ],
+      "properties": {
+        "below_floor": {
+          "description": "Whether value is below floor.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "floor": {
+          "description": "Floor value for this source (if known).",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "measurement": {
+          "description": "Measurement identifier within the source.",
+          "type": "string"
+        },
+        "passes_threshold": {
+          "description": "Whether value passes threshold.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "provenance": {
+          "description": "Provenance metadata for the measurement.",
+          "allOf": [
+            {
+              "$ref": "#/definitions/ProvenanceReport"
+            }
+          ]
+        },
+        "reliability_percentile": {
+          "description": "Reliability percentile of the measurement.",
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0.0
+        },
+        "source": {
+          "description": "Source identifier (e.g., \"arc-agi-3\", \"metr-80pct-time-horizon\").",
+          "type": "string"
+        },
+        "threshold": {
+          "description": "Threshold value for this source (if known).",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "value": {
+          "description": "Measurement value (fraction, hours, or other)."
+        }
+      }
+    },
+    "MarginReport": {
+      "description": "Margin information for a conjunct's evidence.\n\nUsed by consistency check to validate margin variance.",
+      "type": "object",
+      "required": [
+        "max",
+        "min"
+      ],
+      "properties": {
+        "max": {
+          "description": "Maximum margin (value / threshold) across sources.",
+          "type": "number",
+          "format": "double"
+        },
+        "min": {
+          "description": "Minimum margin (value / threshold) across sources.",
+          "type": "number",
+          "format": "double"
+        }
+      }
+    },
+    "ModelMetadata": {
+      "description": "Model identification metadata.",
+      "type": "object",
+      "required": [
+        "id"
+      ],
+      "properties": {
+        "id": {
+          "description": "Model identifier.",
+          "type": "string"
+        },
+        "provider": {
+          "description": "Organization/lab that created the model.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "version_or_date": {
+          "description": "Model version or release date.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "ProvenanceReport": {
+      "description": "Provenance metadata for an evidence measurement.",
+      "type": "object",
+      "required": [
+        "fetch_timestamp",
+        "raw_value",
+        "source_url"
+      ],
+      "properties": {
+        "fetch_timestamp": {
+          "description": "ISO 8601 timestamp when data was fetched.",
+          "type": "string"
+        },
+        "raw_value": {
+          "description": "The raw value as ingested (before parsing/validation).",
+          "type": "string"
+        },
+        "source_url": {
+          "description": "Source URL or API endpoint.",
+          "type": "string"
+        },
+        "source_version": {
+          "description": "Source version or dataset version (if applicable).",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}
