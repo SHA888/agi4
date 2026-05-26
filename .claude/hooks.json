@@ -1,0 +1,19 @@
+{
+  "version": "1.0",
+  "hooks": [
+    {
+      "type": "pre_tool_use",
+      "description": "Pre-tool validation and logging",
+      "enabled": true
+    },
+    {
+      "type": "post_tool_use",
+      "description": "Post-tool result processing",
+      "enabled": true
+    }
+  ],
+  "rtk": {
+    "enabled": true,
+    "description": "Rust Token Killer integration for token-optimized CLI operations"
+  }
+}

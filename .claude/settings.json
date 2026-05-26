@@ -1,0 +1,21 @@
+{
+  "version": "1.0",
+  "project": {
+    "name": "agi4",
+    "description": "AGI/4 attestation protocol and reference runner"
+  },
+  "permissions": {
+    "bash": {
+      "allowed_commands": [
+        "cargo",
+        "git",
+        "rustc",
+        "rustup"
+      ]
+    }
+  },
+  "hooks": {
+    "enabled": true,
+    "path": ".claude/hooks.json"
+  }
+}
