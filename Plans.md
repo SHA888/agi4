@@ -45,7 +45,7 @@ Project task tracking for AGI/4 attestation protocol reference runner.
 
 | Task | Scope | DoD | Depends | Status |
 |------|-------|-----|---------|--------|
-| 2.0a | Centralize source-ID constants in `agi4-core`, consume from evaluators + consistency check ([#1](https://github.com/SHA888/agi4/issues/1)) | One canonical `SourceId` per upstream source; both code paths reference the same constant | 1.9 | cc:完了 [dc0dbaf] |
+| 2.0a | Centralize source-ID constants in `agi4-core`, consume from evaluators + consistency check ([#1](https://github.com/SHA888/agi4/issues/1)) | One canonical `SourceId` per upstream source; both code paths reference the same constant | 1.9 | cc:done [d8ef8f6] |
 | 2.0b | Tighten `evaluate_environmental_transfer` NES handling to match SPEC.md §2.3 ([#2](https://github.com/SHA888/agi4/issues/2)) | NES alone cannot move conjunct to Pass under v0.1.x; unit test added | 1.9 | cc:TODO |
 | 2.1 | Implement ARC Prize adapter (ARC-AGI-2, ARC-AGI-3) | Adapter parses leaderboard data, emits evidence for Generality and EnvironmentalTransfer | 2.0a | cc:TODO |
 | 2.2 | Implement HLE adapter | Adapter round-trip test passes with frozen fixture | 2.0a | cc:TODO |
