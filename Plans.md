@@ -49,7 +49,7 @@ Project task tracking for AGI/4 attestation protocol reference runner.
 | 2.0b | Tighten `evaluate_environmental_transfer` NES handling to match SPEC.md §2.3 ([#2](https://github.com/SHA888/agi4/issues/2)) | NES alone cannot move conjunct to Pass under v0.1.x; unit test added | 1.9 | cc:done [967d8d7] |
 | 2.1 | Implement ARC Prize adapter (ARC-AGI-2, ARC-AGI-3) | Adapter parses leaderboard data, emits evidence for Generality and EnvironmentalTransfer | 2.0a | cc:done [4b2dd6e] |
 | 2.2 | Implement HLE adapter | Adapter round-trip test passes with frozen fixture | 2.0a | cc:done [48e561e] |
-| 2.3 | Implement GPQA Diamond adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
+| 2.3 | Implement GPQA Diamond adapter | Adapter round-trip test passes | 2.0a | cc:done [5913efb] |
 | 2.4 | Implement GDPval/GDPval-AA adapter | Adapter round-trip test passes (prefer Artificial Analysis source) | 2.0a | cc:TODO |
 | 2.5 | Implement RLI adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
 | 2.6 | Implement APEX-Agents adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
