@@ -5,6 +5,7 @@
 
 use crate::conjunct::ConjunctStatus;
 use crate::evidence::{Evidence, SourceValue};
+use crate::sources;
 use crate::threshold;
 use serde::{Deserialize, Serialize};
 
@@ -63,8 +64,10 @@ fn check_no_insufficient_data_masking(
 /// Returns (conjunct_index, pass_threshold, floor) tuples.
 fn get_source_threshold(source_id: &str) -> Option<Vec<(usize, f64, Option<f64>)>> {
     match source_id {
-        "arc-agi-2" => Some(vec![(0, threshold::generality::ARC_AGI_2_PASS, None)]),
-        "arc-agi-3" => Some(vec![
+        sources::generality::ARC_AGI_2 => {
+            Some(vec![(0, threshold::generality::ARC_AGI_2_PASS, None)])
+        }
+        sources::generality::ARC_AGI_3 => Some(vec![
             (
                 0,
                 threshold::generality::ARC_AGI_3_PASS,
@@ -76,39 +79,44 @@ fn get_source_threshold(source_id: &str) -> Option<Vec<(usize, f64, Option<f64>)
                 Some(threshold::environmental_transfer::ARC_AGI_3_FLOOR),
             ),
         ]),
-        "hle" => Some(vec![(0, threshold::generality::HLE_PASS, None)]),
-        "gpqa-diamond" => Some(vec![(0, threshold::generality::GPQA_DIAMOND_PASS, None)]),
-        "gdpval" | "gdpval-aa" => Some(vec![(
+        sources::generality::HLE => Some(vec![(0, threshold::generality::HLE_PASS, None)]),
+        sources::generality::GPQA_DIAMOND => {
+            Some(vec![(0, threshold::generality::GPQA_DIAMOND_PASS, None)])
+        }
+        sources::economic_substitutability::GDPVAL
+        | sources::economic_substitutability::GDPVAL_AA => Some(vec![(
             1,
             threshold::economic_substitutability::GDPVAL_PASS,
             None,
         )]),
-        "rli" => Some(vec![(
+        sources::economic_substitutability::RLI => Some(vec![(
             1,
             threshold::economic_substitutability::RLI_PASS,
             Some(threshold::economic_substitutability::RLI_FLOOR),
         )]),
-        "apex-agents" => Some(vec![(
+        sources::economic_substitutability::APEX_AGENTS => Some(vec![(
             1,
             threshold::economic_substitutability::APEX_AGENTS_PASS,
             None,
         )]),
-        "osworld" => Some(vec![(
+        sources::environmental_transfer::OSWORLD => Some(vec![(
             2,
             threshold::environmental_transfer::OSWORLD_PASS,
             None,
         )]),
-        "nes" => {
+        sources::environmental_transfer::NES => {
             // NES thresholds TBD in v0.1.x per SPEC.md. For now, skip NES in variance calculation.
             None
         }
-        "metr-80pct-time-horizon" | "metr-time-horizon-80pct" => Some(vec![(
+        sources::autonomous_agency::METR_80PCT_TIME_HORIZON => Some(vec![(
             3,
             threshold::autonomous_agency::METR_80PCT_PASS_HOURS,
             Some(threshold::autonomous_agency::METR_80PCT_FLOOR_HOURS),
         )]),
-        "re-bench" => Some(vec![(3, threshold::autonomous_agency::REBENCH_PASS, None)]),
-        "swe-bench-verified" | "swe-bench-verified-pass5" => Some(vec![(
+        sources::autonomous_agency::RE_BENCH => {
+            Some(vec![(3, threshold::autonomous_agency::REBENCH_PASS, None)])
+        }
+        sources::autonomous_agency::SWE_BENCH_VERIFIED => Some(vec![(
             3,
             threshold::autonomous_agency::SWEBENCH_VERIFIED_PASS_AT_5,
             None,

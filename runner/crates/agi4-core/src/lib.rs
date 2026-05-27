@@ -8,6 +8,7 @@ pub mod conjunct;
 pub mod consistency;
 pub mod evaluators;
 pub mod evidence;
+pub mod sources;
 pub mod threshold;
 pub mod verdict;
 

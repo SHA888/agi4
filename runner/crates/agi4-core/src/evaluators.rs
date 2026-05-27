@@ -5,6 +5,7 @@
 
 use crate::conjunct::ConjunctStatus;
 use crate::evidence::{Evidence, SourceValue};
+use crate::sources;
 use crate::threshold;
 
 /// Evaluate the Generality conjunct.
@@ -24,22 +25,22 @@ pub fn evaluate_generality(evidence: &[Evidence]) -> ConjunctStatus {
 
     for e in evidence {
         match e.source.as_str() {
-            "arc-agi-2" => {
+            sources::generality::ARC_AGI_2 => {
                 if let SourceValue::Fraction(f) = e.value {
                     arc_agi_2 = Some(f);
                 }
             }
-            "arc-agi-3" => {
+            sources::generality::ARC_AGI_3 => {
                 if let SourceValue::Fraction(f) = e.value {
                     arc_agi_3 = Some(f);
                 }
             }
-            "hle" => {
+            sources::generality::HLE => {
                 if let SourceValue::Fraction(f) = e.value {
                     hle = Some(f);
                 }
             }
-            "gpqa-diamond" => {
+            sources::generality::GPQA_DIAMOND => {
                 if let SourceValue::Fraction(f) = e.value {
                     gpqa_diamond = Some(f);
                 }
@@ -119,17 +120,18 @@ pub fn evaluate_economic_substitutability(evidence: &[Evidence]) -> ConjunctStat
 
     for e in evidence {
         match e.source.as_str() {
-            "gdpval" => {
+            sources::economic_substitutability::GDPVAL
+            | sources::economic_substitutability::GDPVAL_AA => {
                 if let SourceValue::Fraction(f) = e.value {
                     gdpval = Some(f);
                 }
             }
-            "rli" => {
+            sources::economic_substitutability::RLI => {
                 if let SourceValue::Fraction(f) = e.value {
                     rli = Some(f);
                 }
             }
-            "apex-agents" => {
+            sources::economic_substitutability::APEX_AGENTS => {
                 // APEX-Agents is supplementary, not used in logic yet
             }
             _ => {}
@@ -178,17 +180,17 @@ pub fn evaluate_environmental_transfer(evidence: &[Evidence]) -> ConjunctStatus 
 
     for e in evidence {
         match e.source.as_str() {
-            "arc-agi-3" => {
+            sources::environmental_transfer::ARC_AGI_3 => {
                 if let SourceValue::Fraction(f) = e.value {
                     arc_agi_3 = Some(f);
                 }
             }
-            "osworld" => {
+            sources::environmental_transfer::OSWORLD => {
                 if let SourceValue::Fraction(f) = e.value {
                     osworld = Some(f);
                 }
             }
-            "nes" => {
+            sources::environmental_transfer::NES => {
                 if let SourceValue::Fraction(f) = e.value {
                     nes = Some(f);
                 }
@@ -246,17 +248,17 @@ pub fn evaluate_autonomous_agency(evidence: &[Evidence]) -> ConjunctStatus {
 
     for e in evidence {
         match e.source.as_str() {
-            "metr-80pct-time-horizon" => {
+            sources::autonomous_agency::METR_80PCT_TIME_HORIZON => {
                 if let SourceValue::Hours(h) = e.value {
                     metr = Some(h);
                 }
             }
-            "rebench" => {
+            sources::autonomous_agency::RE_BENCH => {
                 if let SourceValue::Fraction(f) = e.value {
                     rebench = Some(f);
                 }
             }
-            "swebench-verified-pass-at-5" => {
+            sources::autonomous_agency::SWE_BENCH_VERIFIED => {
                 if let SourceValue::Fraction(f) = e.value {
                     swebench = Some(f);
                 }
@@ -459,12 +461,12 @@ mod tests {
     fn autonomous_agency_pass() {
         let evidence = vec![
             make_evidence(
-                "metr-80pct-time-horizon",
+                sources::autonomous_agency::METR_80PCT_TIME_HORIZON,
                 "hours",
                 SourceValue::Hours(NonNegativeHours::new(168.0).unwrap()),
             ),
             make_evidence(
-                "rebench",
+                sources::autonomous_agency::RE_BENCH,
                 "success-rate",
                 SourceValue::Fraction(BoundedFraction::new(0.60).unwrap()),
             ),
@@ -476,7 +478,7 @@ mod tests {
     #[test]
     fn autonomous_agency_insufficient_without_supporting() {
         let evidence = vec![make_evidence(
-            "metr-80pct-time-horizon",
+            sources::autonomous_agency::METR_80PCT_TIME_HORIZON,
             "hours",
             SourceValue::Hours(NonNegativeHours::new(168.0).unwrap()),
         )];
@@ -491,12 +493,12 @@ mod tests {
     fn autonomous_agency_fail_below_floor() {
         let evidence = vec![
             make_evidence(
-                "metr-80pct-time-horizon",
+                sources::autonomous_agency::METR_80PCT_TIME_HORIZON,
                 "hours",
                 SourceValue::Hours(NonNegativeHours::new(4.0).unwrap()),
             ),
             make_evidence(
-                "rebench",
+                sources::autonomous_agency::RE_BENCH,
                 "success-rate",
                 SourceValue::Fraction(BoundedFraction::new(0.60).unwrap()),
             ),
