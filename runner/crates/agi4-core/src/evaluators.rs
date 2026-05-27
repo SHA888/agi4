@@ -176,7 +176,7 @@ pub fn evaluate_economic_substitutability(evidence: &[Evidence]) -> ConjunctStat
 pub fn evaluate_environmental_transfer(evidence: &[Evidence]) -> ConjunctStatus {
     let mut arc_agi_3 = None;
     let mut osworld = None;
-    let mut nes = None;
+    let mut _nes = None;
 
     for e in evidence {
         match e.source.as_str() {
@@ -192,7 +192,7 @@ pub fn evaluate_environmental_transfer(evidence: &[Evidence]) -> ConjunctStatus 
             }
             sources::environmental_transfer::NES => {
                 if let SourceValue::Fraction(f) = e.value {
-                    nes = Some(f);
+                    _nes = Some(f);
                 }
             }
             _ => {}
@@ -210,8 +210,10 @@ pub fn evaluate_environmental_transfer(evidence: &[Evidence]) -> ConjunctStatus 
         return ConjunctStatus::Fail;
     }
 
-    // Need at least one secondary source
-    if osworld.is_none() && nes.is_none() {
+    // In v0.1.x, NES is underspecified and cannot be used for evaluation.
+    // OSWorld is the only valid secondary source. Evidence of NES is accepted
+    // but not evaluated (per SPEC.md §2.3).
+    if osworld.is_none() {
         return ConjunctStatus::InsufficientData;
     }
 
@@ -220,8 +222,7 @@ pub fn evaluate_environmental_transfer(evidence: &[Evidence]) -> ConjunctStatus 
         .map(|f| f.value() >= threshold::environmental_transfer::OSWORLD_PASS)
         .unwrap_or(false);
 
-    if arc_agi_3_pass && (osworld_pass || nes.is_some()) {
-        // NES is TBD, so we treat it as passing if present
+    if arc_agi_3_pass && osworld_pass {
         ConjunctStatus::Pass
     } else if arc_agi_3_pass
         || osworld_pass
@@ -446,7 +447,7 @@ mod tests {
     #[test]
     fn environmental_transfer_insufficient_without_secondary() {
         let evidence = vec![make_evidence(
-            "arc-agi-3",
+            sources::environmental_transfer::ARC_AGI_3,
             "pass-rate",
             SourceValue::Fraction(BoundedFraction::new(0.50).unwrap()),
         )];
@@ -454,6 +455,28 @@ mod tests {
         assert_eq!(
             evaluate_environmental_transfer(&evidence),
             ConjunctStatus::InsufficientData
+        );
+    }
+
+    #[test]
+    fn environmental_transfer_insufficient_with_nes_only() {
+        let evidence = vec![
+            make_evidence(
+                sources::environmental_transfer::ARC_AGI_3,
+                "pass-rate",
+                SourceValue::Fraction(BoundedFraction::new(0.50).unwrap()),
+            ),
+            make_evidence(
+                sources::environmental_transfer::NES,
+                "completion-rate",
+                SourceValue::Fraction(BoundedFraction::new(0.90).unwrap()),
+            ),
+        ];
+
+        assert_eq!(
+            evaluate_environmental_transfer(&evidence),
+            ConjunctStatus::InsufficientData,
+            "NES alone cannot satisfy secondary source requirement in v0.1.x"
         );
     }
 
