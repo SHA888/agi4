@@ -5,6 +5,7 @@
 //! Adapters are testable in isolation against frozen JSON fixtures.
 
 pub mod arc_prize;
+pub mod gdpval;
 pub mod gpqa_diamond;
 pub mod hle;
 pub mod metr;
