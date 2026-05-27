@@ -50,7 +50,7 @@ Project task tracking for AGI/4 attestation protocol reference runner.
 | 2.1 | Implement ARC Prize adapter (ARC-AGI-2, ARC-AGI-3) | Adapter parses leaderboard data, emits evidence for Generality and EnvironmentalTransfer | 2.0a | cc:done [4b2dd6e] |
 | 2.2 | Implement HLE adapter | Adapter round-trip test passes with frozen fixture | 2.0a | cc:done [48e561e] |
 | 2.3 | Implement GPQA Diamond adapter | Adapter round-trip test passes | 2.0a | cc:done [5913efb] |
-| 2.4 | Implement GDPval/GDPval-AA adapter | Adapter round-trip test passes (prefer Artificial Analysis source) | 2.0a | cc:TODO |
+| 2.4 | Implement GDPval/GDPval-AA adapter | Adapter round-trip test passes (prefer Artificial Analysis source) | 2.0a | cc:done [02796e2] |
 | 2.5 | Implement RLI adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
 | 2.6 | Implement APEX-Agents adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
 | 2.7 | Implement OSWorld adapter | Adapter round-trip test passes | 2.0a | cc:TODO |

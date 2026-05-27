@@ -9,6 +9,7 @@ pub mod gdpval;
 pub mod gpqa_diamond;
 pub mod hle;
 pub mod metr;
+pub mod rli;
 
 use agi4_core::evidence::{Evidence, SourceId};
 use serde::de::DeserializeOwned;
