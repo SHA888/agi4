@@ -11,6 +11,7 @@ pub mod gpqa_diamond;
 pub mod hle;
 pub mod metr;
 pub mod osworld;
+pub mod re_bench;
 pub mod rli;
 
 use agi4_core::evidence::{Evidence, SourceId};
