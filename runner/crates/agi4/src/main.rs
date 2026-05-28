@@ -51,11 +51,18 @@ fn main() {
             live,
         } => {
             if live {
-                eprintln!("Error: live attestation not yet wired (v0.1.0 stub)");
-                std::process::exit(1);
-            }
-
-            if let Some(fixture_path) = fixture {
+                // Wire live attestation: fetch from upstream sources concurrently
+                // with timeout=30s and retry=3
+                match agi4::live::attest_live(&model) {
+                    Ok(verdict_json) => {
+                        println!("{}", serde_json::to_string_pretty(&verdict_json).unwrap())
+                    }
+                    Err(e) => {
+                        eprintln!("Error during live attestation: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            } else if let Some(fixture_path) = fixture {
                 match attest_from_fixture(&model, &fixture_path) {
                     Ok(verdict_json) => println!("{}", verdict_json),
                     Err(e) => {

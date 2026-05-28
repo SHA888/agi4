@@ -3,6 +3,9 @@
 //! The `agi4` facade crate provides a curated public API for attestation logic,
 //! verdict types, and report rendering. Version tracks SPEC.md exactly.
 
+/// Live upstream source fetching and attestation.
+pub mod live;
+
 /// Core verdict logic and types.
 pub mod core {
     pub use agi4_core::conjunct::{Conjunct, ConjunctStatus};

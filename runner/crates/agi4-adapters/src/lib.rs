@@ -15,6 +15,18 @@ pub mod re_bench;
 pub mod rli;
 pub mod swe_bench;
 
+// Re-export adapter and fetcher types for convenience
+pub use apex_agents::ApexAgentsAdapter;
+pub use arc_prize::ArcPrizeAdapter;
+pub use gdpval::GdpvalAdapter;
+pub use gpqa_diamond::GpqaDiamondAdapter;
+pub use hle::HleAdapter;
+pub use metr::MetrAdapter;
+pub use osworld::OsworldAdapter;
+pub use re_bench::ReBenchAdapter;
+pub use rli::RliAdapter;
+pub use swe_bench::SweBenchAdapter;
+
 use agi4_core::evidence::{Evidence, SourceId};
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
@@ -171,6 +183,98 @@ impl Fetcher for InMemoryFetcher {
     }
 }
 
+/// HTTP fetcher with timeout and exponential backoff retry (blocking).
+#[derive(Clone)]
+pub struct HttpFetcher {
+    /// Request timeout in seconds.
+    timeout_secs: u64,
+    /// Maximum number of retry attempts.
+    max_retries: u32,
+}
+
+/// Error for HTTP fetcher operations.
+#[derive(Debug, Clone)]
+pub struct HttpFetcherError {
+    url: String,
+    message: String,
+}
+
+impl fmt::Display for HttpFetcherError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "HTTP fetch failed for {}: {}", self.url, self.message)
+    }
+}
+
+impl Error for HttpFetcherError {}
+
+impl HttpFetcher {
+    /// Create a new HTTP fetcher with default timeout (30s) and retries (3).
+    pub fn new() -> Self {
+        Self {
+            timeout_secs: 30,
+            max_retries: 3,
+        }
+    }
+
+    /// Create an HTTP fetcher with custom timeout and retries.
+    pub fn with_config(timeout_secs: u64, max_retries: u32) -> Self {
+        Self {
+            timeout_secs,
+            max_retries,
+        }
+    }
+}
+
+impl Default for HttpFetcher {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Fetcher for HttpFetcher {
+    type Error = HttpFetcherError;
+
+    fn fetch(&self, url: &Url) -> Result<String, Self::Error> {
+        let client = reqwest::blocking::Client::builder()
+            .timeout(std::time::Duration::from_secs(self.timeout_secs))
+            .build()
+            .map_err(|e| HttpFetcherError {
+                url: url.to_string(),
+                message: format!("failed to create HTTP client: {}", e),
+            })?;
+
+        for attempt in 0..=self.max_retries {
+            match client.get(url.as_str()).send() {
+                Ok(response) => {
+                    return response.text().map_err(|e| HttpFetcherError {
+                        url: url.to_string(),
+                        message: format!("failed to read response: {}", e),
+                    });
+                }
+                Err(e) => {
+                    if attempt < self.max_retries {
+                        let backoff_ms = 100u64 * (2u64.pow(attempt));
+                        std::thread::sleep(std::time::Duration::from_millis(backoff_ms));
+                        continue;
+                    }
+                    return Err(HttpFetcherError {
+                        url: url.to_string(),
+                        message: format!(
+                            "request failed after {} retries: {}",
+                            self.max_retries, e
+                        ),
+                    });
+                }
+            }
+        }
+
+        Err(HttpFetcherError {
+            url: url.to_string(),
+            message: "all retries exhausted".to_string(),
+        })
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -308,5 +412,51 @@ mod tests {
     fn in_memory_fetcher_is_send_sync() {
         fn assert_send_sync<T: Send + Sync>() {}
         assert_send_sync::<InMemoryFetcher>();
+    }
+
+    #[test]
+    fn http_fetcher_new() {
+        let fetcher = HttpFetcher::new();
+        assert_eq!(fetcher.timeout_secs, 30);
+        assert_eq!(fetcher.max_retries, 3);
+    }
+
+    #[test]
+    fn http_fetcher_default() {
+        let fetcher = HttpFetcher::default();
+        assert_eq!(fetcher.timeout_secs, 30);
+        assert_eq!(fetcher.max_retries, 3);
+    }
+
+    #[test]
+    fn http_fetcher_with_config() {
+        let fetcher = HttpFetcher::with_config(60, 5);
+        assert_eq!(fetcher.timeout_secs, 60);
+        assert_eq!(fetcher.max_retries, 5);
+    }
+
+    #[test]
+    fn http_fetcher_error_display() {
+        let err = HttpFetcherError {
+            url: "https://example.com".to_string(),
+            message: "connection refused".to_string(),
+        };
+        assert!(err.to_string().contains("example.com"));
+        assert!(err.to_string().contains("connection refused"));
+    }
+
+    #[test]
+    fn http_fetcher_invalid_url() {
+        let fetcher = HttpFetcher::new();
+        let invalid_url =
+            Url::parse("https://invalid-nonexistent-domain-12345.local").expect("URL should parse");
+        let result = fetcher.fetch(&invalid_url);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn http_fetcher_is_send_sync() {
+        fn assert_send_sync<T: Send + Sync>() {}
+        assert_send_sync::<HttpFetcher>();
     }
 }
