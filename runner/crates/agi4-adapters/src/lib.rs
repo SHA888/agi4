@@ -15,18 +15,6 @@ pub mod re_bench;
 pub mod rli;
 pub mod swe_bench;
 
-// Re-export all public types and adapter types for convenience
-pub use apex_agents::ApexAgentsAdapter;
-pub use arc_prize::ArcPrizeAdapter;
-pub use gdpval::GdpvalAdapter;
-pub use gpqa_diamond::GpqaDiamondAdapter;
-pub use hle::HleAdapter;
-pub use metr::MetrAdapter;
-pub use osworld::OsworldAdapter;
-pub use re_bench::ReBenchAdapter;
-pub use rli::RliAdapter;
-pub use swe_bench::SweBenchAdapter;
-
 use agi4_core::evidence::{Evidence, SourceId};
 use serde::de::DeserializeOwned;
 use sha2::{Digest, Sha256};
@@ -417,6 +405,18 @@ impl Fetcher for CachingFetcher {
         Ok(data)
     }
 }
+
+// Re-export all public adapter types for convenience
+pub use apex_agents::ApexAgentsAdapter;
+pub use arc_prize::ArcPrizeAdapter;
+pub use gdpval::GdpvalAdapter;
+pub use gpqa_diamond::GpqaDiamondAdapter;
+pub use hle::HleAdapter;
+pub use metr::MetrAdapter;
+pub use osworld::OsworldAdapter;
+pub use re_bench::ReBenchAdapter;
+pub use rli::RliAdapter;
+pub use swe_bench::SweBenchAdapter;
 
 #[cfg(test)]
 mod tests {
