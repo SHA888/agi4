@@ -54,7 +54,7 @@ Project task tracking for AGI/4 attestation protocol reference runner.
 | 2.5 | Implement RLI adapter | Adapter round-trip test passes | 2.0a | cc:done [795b558] |
 | 2.6 | Implement APEX-Agents adapter | Adapter round-trip test passes | 2.0a | cc:done [941d906] |
 | 2.7 | Implement OSWorld adapter | Adapter round-trip test passes | 2.0a | cc:done [e35f54a] |
-| 2.8 | Implement RE-Bench adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
+| 2.8 | Implement RE-Bench adapter | Adapter round-trip test passes | 2.0a | cc:done [e1318f4] |
 | 2.9 | Implement SWE-bench Verified pass@5 adapter ([#1](https://github.com/SHA888/agi4/issues/1)) | Adapter rejects pass@1-only, round-trip test passes | 2.0a | cc:TODO |
 | 2.10 | Wire `attest --live` to fetch upstream sources concurrently | `cargo run -- attest --model example --live` fetches with timeout and retry | 2.1-2.9 | cc:TODO |
 | 2.11 | Add cache layer (local filesystem) to avoid hammering upstream | Cache hit/miss behavior tested, concurrent fetches deduplicate | 2.10 | cc:TODO |
