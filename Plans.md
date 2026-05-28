@@ -61,6 +61,32 @@ Project task tracking for AGI/4 attestation protocol reference runner.
 | 2.12 | Run first live attestation on a frontier model | Verdict JSON + Markdown report committed to `attestations/v0.1.0/<model>-<date>.{json,md}` | 2.11 | cc:done [37f0612] |
 | 2.13 | Update README with "First attestations" section | README links to committed verdicts | 2.12 | cc:done [4628989] |
 
+### Code Review Findings (2026-05-28) — Remediation
+
+A multi-angle review of the v0.1.1 work (`v0.1.0...HEAD`) found that neither CLI
+path actually evaluates evidence through `agi4-core`: the live path returns
+hardcoded synthetic evidence and the fixture path ignores its input. As a
+result the first attestation (Task 2.12) is **invalid** — it reports `attested`
+for Claude 3.5 Sonnet from synthetic data that would be `not_attested` under the
+real SPEC thresholds. Tasks 2.12–2.13 outputs are superseded pending the fixes
+below. Severity: **C**ritical / **H**igh / **M**edium / **L**ow.
+
+| Task | Sev | Issue | Fix / DoD | Depends | Status |
+|------|-----|-------|-----------|---------|--------|
+| 2.14 | C | `live.rs` `attest_live` returns hardcoded synthetic evidence regardless of model, re-implements the verdict inline, hardcodes thresholds below SPEC (arc-agi-2 0.72 vs 0.85, gpqa 0.79 vs 0.90, hle 0.75 vs 0.80, gdpval 0.80 vs 0.85, osworld 0.72 vs 0.85, swe-bench 0.40 vs 0.85, metr 24 vs 168), and hardcodes `consistency_check=pass` | Route live evidence through `agi4-core` evaluators + `consistency_check`; every threshold/floor sourced from `threshold.rs`; no inline verdict logic; uses canonical source-id constants | 2.10 | cc:TODO |
+| 2.15 | C | `main.rs:99` `attest_from_fixture` ignores the fixture dir and emits a constant all-`insufficient_data` verdict; adapters' `parse`/`to_evidence` are never invoked by any CLI path | Load fixture dir → `Source::parse` → `to_evidence` → evaluators → verdict; e2e integration test asserts real (non-stub) output | 2.1-2.9 | cc:TODO |
+| 2.16 | C | First attestation `attestations/v0.1.0/claude-3.5-sonnet-2026-05-28.json` falsely reports `attested` from synthetic data; `spec_version` is also mislabeled `0.1.0` | Withdraw/regenerate the attestation from real evidence after 2.14/2.15; correct `spec_version`; verify verdict matches `agi4-core` | 2.14, 2.15 | cc:TODO |
+| 2.17 | H | `swe_bench.rs:76` `id()` returns `"swe-bench"`, but evaluators (`evaluators.rs:262`) and consistency (`consistency.rs:119`) match canonical `"swe-bench-verified"`; SWE-bench evidence is silently dropped | Return `sources::autonomous_agency::SWE_BENCH_VERIFIED`; add a cross-check test asserting every adapter `id()` equals its `sources.rs` constant | 2.0a, 2.9 | cc:TODO |
+| 2.18 | H | CI `spec-traceability` job runs `cd crates/agi4-core`, but the crate lives at `runner/crates/agi4-core`; the `cd` (before `set -e`) fails and the guard passes vacuously — principle #5 is never enforced | Fix path to `runner/crates/agi4-core`; confirm the job fails when a threshold-constant reference is removed | 1.16 | cc:TODO |
+| 2.19 | H | CI `adapter-fixture-validation` only checks the METR adapter; the 9 new v0.1.1 adapters are unguarded (Task 2.x DoD unmet) | Iterate all adapters; fail if any lacks a fixture or round-trip test | 1.17 | cc:TODO |
+| 2.20 | H | `consistency.rs:149` variance bound mixes Hours-margins (`value/168`) with Fraction-margins (~1.0-1.3) in one min/max ratio, spuriously failing strong long-horizon models (e.g. METR 400h forces `not_attested`) | Normalize margins per value kind (compare within commensurate groups) per SPEC §4 rule 2; add regression test for a strong long-horizon model | 1.5 | cc:TODO |
+| 2.21 | M | `main.rs:58` `.unwrap()` and `Default` impls' `.expect()` (`CachingFetcher` + all 9 adapters) panic in non-test code, violating the no-unwrap/no-panic rule | Replace with `?` / fallible construction; enable `clippy::unwrap_used` + `expect_used` deny in CI to enforce | 2.11 | cc:TODO |
+| 2.22 | M | `lib.rs:299` `CachingFetcher` doc claims concurrent dedup via file locking, but `fetch` is read → http → `fs::write` (TOCTOU + write race, possible torn cache served as valid) | Implement real dedup/locking + atomic write (temp file + rename), or correct the doc; add a concurrency test | 2.11 | cc:TODO |
+| 2.23 | M | Adapter raw structs lack `#[serde(deny_unknown_fields)]`, violating Parse-Don't-Validate (principle #2); schema drift / renamed fields are silently accepted | Add `deny_unknown_fields` to all adapter raw structs; add a test asserting unknown fields fail parse | 2.1-2.9 | cc:TODO |
+| 2.24 | L | `live.rs:163` METR source id `"metr-time-horizon"` is non-canonical (vs `"metr-80pct-time-horizon"`) | Use the canonical constant (subsumed by 2.14) | 2.14 | cc:TODO |
+| 2.25 | L | `evaluators.rs:233` environmental_transfer `Fail` arm is dead code — the floor is already enforced at line 209, so the Partial guard `>= FLOOR` is always true | Remove the unreachable arm, or restructure so Fail is reachable per SPEC §2.3 intent | 2.0b | cc:TODO |
+| 2.26 | L | Seven single-value adapters are ~300-line near-duplicates with per-adapter error enums + test modules (~4000 LOC copy-paste); crate-level `AdapterError` is unused | Extract a generic `FractionSource` helper + parameterized tests; consume shared `AdapterError` | 2.1-2.9 | cc:TODO |
+
 ---
 
 ## Phase 3: v0.1.2 — Calibration Based on First Attestation
