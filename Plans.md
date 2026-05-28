@@ -57,7 +57,7 @@ Project task tracking for AGI/4 attestation protocol reference runner.
 | 2.8 | Implement RE-Bench adapter | Adapter round-trip test passes | 2.0a | cc:done [e1318f4] |
 | 2.9 | Implement SWE-bench Verified pass@5 adapter ([#1](https://github.com/SHA888/agi4/issues/1)) | Adapter rejects pass@1-only, round-trip test passes | 2.0a | cc:done [3efa1ab] |
 | 2.10 | Wire `attest --live` to fetch upstream sources concurrently | `cargo run -- attest --model example --live` fetches with timeout and retry | 2.1-2.9 | cc:done [2ccfc3e] |
-| 2.11 | Add cache layer (local filesystem) to avoid hammering upstream | Cache hit/miss behavior tested, concurrent fetches deduplicate | 2.10 | cc:TODO |
+| 2.11 | Add cache layer (local filesystem) to avoid hammering upstream | Cache hit/miss behavior tested, concurrent fetches deduplicate | 2.10 | cc:done [cba1b24] |
 | 2.12 | Run first live attestation on a frontier model | Verdict JSON + Markdown report committed to `attestations/v0.1.0/<model>-<date>.{json,md}` | 2.11 | cc:TODO |
 | 2.13 | Update README with "First attestations" section | README links to committed verdicts | 2.12 | cc:TODO |
 
