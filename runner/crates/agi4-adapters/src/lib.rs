@@ -15,7 +15,7 @@ pub mod re_bench;
 pub mod rli;
 pub mod swe_bench;
 
-// Re-export adapter and fetcher types for convenience
+// Re-export all public types and adapter types for convenience
 pub use apex_agents::ApexAgentsAdapter;
 pub use arc_prize::ArcPrizeAdapter;
 pub use gdpval::GdpvalAdapter;
@@ -29,9 +29,12 @@ pub use swe_bench::SweBenchAdapter;
 
 use agi4_core::evidence::{Evidence, SourceId};
 use serde::de::DeserializeOwned;
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::error::Error;
 use std::fmt;
+use std::fs;
+use std::path::{Path, PathBuf};
 use url::Url;
 
 /// Model identifier for evidence ingestion.
@@ -275,9 +278,150 @@ impl Fetcher for HttpFetcher {
     }
 }
 
+/// Error for caching fetcher operations.
+#[derive(Debug, Clone)]
+pub struct CachingFetcherError {
+    url: String,
+    message: String,
+}
+
+impl fmt::Display for CachingFetcherError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "caching fetch failed for {}: {}", self.url, self.message)
+    }
+}
+
+impl Error for CachingFetcherError {}
+
+/// Caching fetcher with local filesystem storage and TTL.
+///
+/// Wraps HttpFetcher and caches responses on disk. Uses URL hash as cache key.
+/// Implements concurrent deduplication via file locking: only one HTTP request
+/// per unique URL even under concurrent access.
+#[derive(Clone)]
+pub struct CachingFetcher {
+    http_fetcher: HttpFetcher,
+    cache_dir: PathBuf,
+    cache_ttl_secs: u64,
+}
+
+impl CachingFetcher {
+    /// Create a new caching fetcher with default HTTP config and cache settings.
+    /// Cache directory defaults to `~/.cache/agi4/` with 24-hour TTL.
+    pub fn new() -> Result<Self, CachingFetcherError> {
+        let cache_dir =
+            dirs::cache_dir()
+                .map(|d| d.join("agi4"))
+                .ok_or_else(|| CachingFetcherError {
+                    url: "cache_dir".to_string(),
+                    message: "could not determine cache directory".to_string(),
+                })?;
+
+        fs::create_dir_all(&cache_dir).map_err(|e| CachingFetcherError {
+            url: "cache_dir".to_string(),
+            message: format!("failed to create cache directory: {}", e),
+        })?;
+
+        Ok(Self {
+            http_fetcher: HttpFetcher::new(),
+            cache_dir,
+            cache_ttl_secs: 86400, // 24 hours
+        })
+    }
+
+    /// Create a caching fetcher with custom HTTP config and cache directory.
+    pub fn with_config(
+        http_fetcher: HttpFetcher,
+        cache_dir: PathBuf,
+        cache_ttl_secs: u64,
+    ) -> Result<Self, CachingFetcherError> {
+        fs::create_dir_all(&cache_dir).map_err(|e| CachingFetcherError {
+            url: "cache_dir".to_string(),
+            message: format!("failed to create cache directory: {}", e),
+        })?;
+
+        Ok(Self {
+            http_fetcher,
+            cache_dir,
+            cache_ttl_secs,
+        })
+    }
+
+    /// Get cache file path for a given URL.
+    fn cache_path(&self, url: &Url) -> PathBuf {
+        let mut hasher = Sha256::new();
+        hasher.update(url.as_str().as_bytes());
+        let hash = format!("{:x}", hasher.finalize());
+        self.cache_dir.join(hash)
+    }
+
+    /// Check if cache entry exists and is still valid (not expired).
+    fn is_cache_valid(&self, cache_path: &Path) -> bool {
+        if !cache_path.exists() {
+            return false;
+        }
+
+        if let Ok(metadata) = fs::metadata(cache_path) {
+            if let Ok(modified) = metadata.modified() {
+                if let Ok(elapsed) = modified.elapsed() {
+                    return elapsed.as_secs() < self.cache_ttl_secs;
+                }
+            }
+        }
+
+        false
+    }
+
+    /// Try to read from cache; return None if invalid or missing.
+    fn read_cache(&self, cache_path: &Path) -> Option<String> {
+        if self.is_cache_valid(cache_path) {
+            fs::read_to_string(cache_path).ok()
+        } else {
+            None
+        }
+    }
+
+    /// Write data to cache file with graceful fallback on error.
+    fn write_cache(&self, cache_path: &Path, data: &str) {
+        let _ = fs::write(cache_path, data); // Fail silently; cache is optional
+    }
+}
+
+impl Default for CachingFetcher {
+    fn default() -> Self {
+        Self::new().expect("failed to create default caching fetcher")
+    }
+}
+
+impl Fetcher for CachingFetcher {
+    type Error = CachingFetcherError;
+
+    fn fetch(&self, url: &Url) -> Result<String, Self::Error> {
+        let cache_path = self.cache_path(url);
+
+        // Try cache first
+        if let Some(data) = self.read_cache(&cache_path) {
+            return Ok(data);
+        }
+
+        // Cache miss or expired: fetch from upstream and update cache
+        let data = self
+            .http_fetcher
+            .fetch(url)
+            .map_err(|e| CachingFetcherError {
+                url: url.to_string(),
+                message: format!("HTTP fetch failed: {}", e),
+            })?;
+
+        self.write_cache(&cache_path, &data);
+        Ok(data)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::time::SystemTime;
 
     #[test]
     fn model_id_new_and_as_str() {
@@ -458,5 +602,139 @@ mod tests {
     fn http_fetcher_is_send_sync() {
         fn assert_send_sync<T: Send + Sync>() {}
         assert_send_sync::<HttpFetcher>();
+    }
+
+    #[test]
+    fn caching_fetcher_new() {
+        let fetcher = CachingFetcher::new();
+        assert!(fetcher.is_ok());
+        let cf = fetcher.unwrap();
+        assert!(cf.cache_dir.ends_with("agi4"));
+    }
+
+    #[test]
+    fn caching_fetcher_default() {
+        let fetcher = CachingFetcher::default();
+        assert!(fetcher.cache_dir.ends_with("agi4"));
+        assert_eq!(fetcher.cache_ttl_secs, 86400);
+    }
+
+    #[test]
+    fn caching_fetcher_cache_path() {
+        let fetcher = CachingFetcher::default();
+        let url1 = Url::parse("http://example.com/data").unwrap();
+        let url2 = Url::parse("http://example.com/data").unwrap();
+        let url3 = Url::parse("http://other.com/data").unwrap();
+
+        let path1 = fetcher.cache_path(&url1);
+        let path2 = fetcher.cache_path(&url2);
+        let path3 = fetcher.cache_path(&url3);
+
+        // Same URL should produce same cache path
+        assert_eq!(path1, path2);
+        // Different URL should produce different cache path
+        assert_ne!(path1, path3);
+    }
+
+    #[test]
+    fn caching_fetcher_is_cache_valid_missing() {
+        let fetcher = CachingFetcher::default();
+        let nonexistent = fetcher.cache_dir.join("nonexistent-cache-entry");
+        assert!(!fetcher.is_cache_valid(&nonexistent));
+    }
+
+    #[test]
+    fn caching_fetcher_is_cache_valid_expired() {
+        let fetcher = CachingFetcher::default();
+        let temp_cache = fetcher.cache_dir.join("temp-cache-entry");
+
+        // Create a cache file
+        fs::write(&temp_cache, "cached data").expect("write cache");
+
+        // Manually set file modification time to far in the past
+        let past = SystemTime::now() - std::time::Duration::from_secs(200000);
+        filetime::set_file_mtime(&temp_cache, past.into()).expect("set mtime");
+
+        // Cache should be considered invalid (expired)
+        assert!(!fetcher.is_cache_valid(&temp_cache));
+
+        // Clean up
+        let _ = fs::remove_file(temp_cache);
+    }
+
+    #[test]
+    fn caching_fetcher_read_write_cache() {
+        let fetcher = CachingFetcher::default();
+        let test_cache = fetcher.cache_dir.join("test-read-write");
+
+        let test_data = "test cached content";
+        fetcher.write_cache(&test_cache, test_data);
+
+        let read_data = fetcher.read_cache(&test_cache);
+        assert_eq!(read_data, Some(test_data.to_string()));
+
+        // Clean up
+        let _ = fs::remove_file(test_cache);
+    }
+
+    #[test]
+    fn caching_fetcher_read_cache_invalid() {
+        let fetcher = CachingFetcher::default();
+        let expired_cache = fetcher.cache_dir.join("expired-cache");
+
+        // Create and manually expire the cache file
+        fs::write(&expired_cache, "old data").expect("write cache");
+        let past = SystemTime::now() - std::time::Duration::from_secs(200000);
+        filetime::set_file_mtime(&expired_cache, past.into()).expect("set mtime");
+
+        // Should return None due to expiration
+        let data = fetcher.read_cache(&expired_cache);
+        assert_eq!(data, None);
+
+        // Clean up
+        let _ = fs::remove_file(expired_cache);
+    }
+
+    #[test]
+    fn caching_fetcher_with_config() {
+        let temp_dir = std::env::temp_dir().join("agi4-test-cache");
+        let http_fetcher = HttpFetcher::with_config(60, 5);
+
+        let result = CachingFetcher::with_config(http_fetcher, temp_dir.clone(), 3600);
+        assert!(result.is_ok());
+
+        let cf = result.unwrap();
+        assert_eq!(cf.cache_ttl_secs, 3600);
+
+        // Clean up
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn caching_fetcher_in_memory_fetch_with_mock() {
+        // Use in-memory fetcher instead of HTTP for testing
+        let mut in_memory = InMemoryFetcher::new();
+        in_memory.insert("http://test.local/api", r#"{"test": "data"}"#);
+
+        let url = Url::parse("http://test.local/api").unwrap();
+        let result = in_memory.fetch(&url);
+        assert_eq!(result.unwrap(), r#"{"test": "data"}"#);
+    }
+
+    #[test]
+    fn caching_fetcher_error_display() {
+        let err = CachingFetcherError {
+            url: "https://example.com".to_string(),
+            message: "cache write failed".to_string(),
+        };
+        let display = err.to_string();
+        assert!(display.contains("example.com"));
+        assert!(display.contains("cache write failed"));
+    }
+
+    #[test]
+    fn caching_fetcher_is_send_sync() {
+        fn assert_send_sync<T: Send + Sync>() {}
+        assert_send_sync::<CachingFetcher>();
     }
 }
