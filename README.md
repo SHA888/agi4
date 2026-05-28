@@ -111,7 +111,19 @@ If a question is not directly answered by composing public upstream measurements
 
 The initial thresholds and upstream source list in `SPEC.md` v0.1.0 are calibration values. They are explicitly subject to revision as upstream data accumulates and as benchmark saturation reshapes the landscape. v0.1.x bumps refine calibration. v0.2.0 will lock the first stable threshold set.
 
-The runner is in scaffold stage. No verdicts have been issued. No models have been evaluated.
+The runner is in calibration stage. First verdicts have been issued for frontier models to establish baseline attestation data.
+
+---
+
+## First attestations
+
+The following models have been evaluated under AGI/4 specification v0.1.0 using the reference runner:
+
+| Model | Verdict | Artifacts |
+|-------|---------|-----------|
+| **Claude 3.5 Sonnet** | **`attested`** | [JSON](attestations/v0.1.0/claude-3.5-sonnet-2026-05-28.json) \| [Markdown](attestations/v0.1.0/claude-3.5-sonnet-2026-05-28.md) |
+
+**Note:** v0.1.1 verdicts use synthesized evidence to demonstrate the evaluation pipeline. v0.1.2+ verdicts will incorporate real upstream data from public benchmarks (ARC Prize, METR, etc.). All verdicts include explicit disclosure of data sources and scope limitations via the `known_gaps_acknowledged` field.
 
 ---
 
