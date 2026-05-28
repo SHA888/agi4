@@ -16,12 +16,17 @@ use agi4_schema::{
 };
 use chrono::Utc;
 
+/// Convert a ConjunctStatus to its lowercase string representation for output.
+fn status_to_string(status: ConjunctStatus) -> String {
+    format!("{:?}", status).to_lowercase()
+}
+
 /// Perform live attestation by fetching from upstream sources and evaluating evidence.
 /// Returns a verdict JSON with collected evidence and evaluation results based on agi4-core logic.
 ///
-/// TODO (task 2.14 follow-up): Fix adapter type exports from agi4-adapters crate.
-/// The current implementation demonstrates the architecture but uses placeholder evidence
-/// collection. Once adapter imports are resolved, this will call the real adapters via CachingFetcher.
+/// **IMPORTANT**: This implementation is architectural scaffolding only. Evidence collection is stubbed
+/// with an empty vector. Real attestation requires task 2.15: wiring CachingFetcher + all 10 adapters.
+/// Currently, all verdicts return `insufficient_data` due to empty evidence, making this a placeholder.
 pub fn attest_live(model_id: &str) -> Result<VerdictOutput, Box<dyn std::error::Error>> {
     eprintln!("Starting live attestation for model: {}", model_id);
     eprintln!("HTTP fetcher: timeout=30s, retries=3");
@@ -30,10 +35,11 @@ pub fn attest_live(model_id: &str) -> Result<VerdictOutput, Box<dyn std::error::
     let now = Utc::now();
     let run_timestamp = now.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
 
-    // NOTE: Evidence collection from real adapters would happen here via CachingFetcher.
-    // For now, we use an empty evidence set to demonstrate the evaluation flow.
-    // The key architectural change is below: evidence is routed through real evaluators,
-    // not inline verdict logic.
+    // TASK 2.15 TODO: Fetch evidence from upstream sources via CachingFetcher + adapters.
+    // The architecture is in place (evaluators + consistency_check below), but evidence
+    // collection is stubbed. Without real evidence, all evaluators return InsufficientData.
+    // Placeholder: empty evidence vector. To be replaced in task 2.15 with:
+    //   let all_evidence = fetch_all_adapters(&CachingFetcher::new()?, &model)?;
     let all_evidence: Vec<Evidence> = Vec::new();
     let evidence_reports: Vec<EvidenceReport> = Vec::new();
 
@@ -57,63 +63,37 @@ pub fn attest_live(model_id: &str) -> Result<VerdictOutput, Box<dyn std::error::
         "not_attested"
     };
 
-    // Group evidence by conjunct for output
-    let generality_evidence = evidence_reports
-        .iter()
-        .filter(|e| {
-            matches!(
-                e.source.as_str(),
-                "arc-agi-2" | "arc-agi-3" | "hle" | "gpqa-diamond"
-            )
-        })
-        .cloned()
-        .collect();
+    // Group evidence by conjunct for output (single pass O(n) partition instead of 4 passes)
+    let mut generality_evidence = Vec::new();
+    let mut econ_evidence = Vec::new();
+    let mut env_evidence = Vec::new();
+    let mut agency_evidence = Vec::new();
 
-    let econ_evidence = evidence_reports
-        .iter()
-        .filter(|e| {
-            matches!(
-                e.source.as_str(),
-                "gdpval" | "gdpval-aa" | "rli" | "apex-agents"
-            )
-        })
-        .cloned()
-        .collect();
-
-    let env_evidence = evidence_reports
-        .iter()
-        .filter(|e| matches!(e.source.as_str(), "arc-agi-3" | "osworld" | "nes"))
-        .cloned()
-        .collect();
-
-    let agency_evidence = evidence_reports
-        .iter()
-        .filter(|e| {
-            matches!(
-                e.source.as_str(),
-                "metr-80pct-time-horizon" | "re-bench" | "swe-bench-verified"
-            )
-        })
-        .cloned()
-        .collect();
+    for report in evidence_reports {
+        match report.source.as_str() {
+            "arc-agi-2" | "hle" | "gpqa-diamond" => generality_evidence.push(report),
+            "gdpval" | "gdpval-aa" | "rli" | "apex-agents" => econ_evidence.push(report),
+            "arc-agi-3" => {
+                // Arc-agi-3 contributes to both generality and environmental_transfer
+                generality_evidence.push(report.clone());
+                env_evidence.push(report);
+            }
+            "osworld" | "nes" => env_evidence.push(report),
+            "metr-80pct-time-horizon" | "re-bench" | "swe-bench-verified" => {
+                agency_evidence.push(report)
+            }
+            _ => {} // Unknown source, skip
+        }
+    }
 
     let verdict_reasons = vec![
-        format!(
-            "Generality: {}",
-            format!("{:?}", generality_status).to_lowercase()
-        ),
+        format!("Generality: {}", status_to_string(generality_status)),
         format!(
             "Economic Substitutability: {}",
-            format!("{:?}", econ_status).to_lowercase()
+            status_to_string(econ_status)
         ),
-        format!(
-            "Environmental Transfer: {}",
-            format!("{:?}", env_status).to_lowercase()
-        ),
-        format!(
-            "Autonomous Agency: {}",
-            format!("{:?}", agency_status).to_lowercase()
-        ),
+        format!("Environmental Transfer: {}", status_to_string(env_status)),
+        format!("Autonomous Agency: {}", status_to_string(agency_status)),
         format!(
             "Consistency Check: {}",
             if consistency_result.passed {
@@ -135,22 +115,22 @@ pub fn attest_live(model_id: &str) -> Result<VerdictOutput, Box<dyn std::error::
         },
         conjuncts: ConjunctsOutput {
             generality: ConjunctReport {
-                status: format!("{:?}", generality_status).to_lowercase(),
+                status: status_to_string(generality_status),
                 evidence: generality_evidence,
                 margins: None,
             },
             economic_substitutability: ConjunctReport {
-                status: format!("{:?}", econ_status).to_lowercase(),
+                status: status_to_string(econ_status),
                 evidence: econ_evidence,
                 margins: None,
             },
             environmental_transfer: ConjunctReport {
-                status: format!("{:?}", env_status).to_lowercase(),
+                status: status_to_string(env_status),
                 evidence: env_evidence,
                 margins: None,
             },
             autonomous_agency: ConjunctReport {
-                status: format!("{:?}", agency_status).to_lowercase(),
+                status: status_to_string(agency_status),
                 evidence: agency_evidence,
                 margins: None,
             },
