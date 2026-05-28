@@ -4,6 +4,7 @@
 //! and evidence conversion. The Fetcher trait handles I/O (HTTP, file, in-memory).
 //! Adapters are testable in isolation against frozen JSON fixtures.
 
+pub mod apex_agents;
 pub mod arc_prize;
 pub mod gdpval;
 pub mod gpqa_diamond;

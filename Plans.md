@@ -51,7 +51,7 @@ Project task tracking for AGI/4 attestation protocol reference runner.
 | 2.2 | Implement HLE adapter | Adapter round-trip test passes with frozen fixture | 2.0a | cc:done [48e561e] |
 | 2.3 | Implement GPQA Diamond adapter | Adapter round-trip test passes | 2.0a | cc:done [5913efb] |
 | 2.4 | Implement GDPval/GDPval-AA adapter | Adapter round-trip test passes (prefer Artificial Analysis source) | 2.0a | cc:done [02796e2] |
-| 2.5 | Implement RLI adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
+| 2.5 | Implement RLI adapter | Adapter round-trip test passes | 2.0a | cc:done [795b558] |
 | 2.6 | Implement APEX-Agents adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
 | 2.7 | Implement OSWorld adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
 | 2.8 | Implement RE-Bench adapter | Adapter round-trip test passes | 2.0a | cc:TODO |
