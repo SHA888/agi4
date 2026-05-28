@@ -16,6 +16,7 @@ Cargo.lock
 
 # Claude Code
 .claude/
+.harness-mem/
 out/
 
 # IDE
