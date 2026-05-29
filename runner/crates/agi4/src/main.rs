@@ -217,7 +217,7 @@ fn attest_from_fixture(
         verdict: overall_verdict.to_string(),
         verdict_reasons,
         known_gaps_acknowledged: vec![
-            "Fixture-based attestation uses only provided evidence".to_string()
+            "Fixture-based attestation uses only provided evidence".to_string(),
         ],
     };
 

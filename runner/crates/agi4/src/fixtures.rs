@@ -4,9 +4,9 @@
 //! and produces evidence for verdict evaluation.
 
 use agi4_adapters::{
-    apex_agents::ApexAgentsAdapter, arc_prize::ArcPrizeAdapter, gdpval::GdpvalAdapter,
-    gpqa_diamond::GpqaDiamondAdapter, hle::HleAdapter, metr::MetrAdapter, osworld::OsworldAdapter,
-    re_bench::ReBenchAdapter, rli::RliAdapter, swe_bench::SweBenchAdapter, ModelId, Source,
+    ModelId, Source, apex_agents::ApexAgentsAdapter, arc_prize::ArcPrizeAdapter,
+    gdpval::GdpvalAdapter, gpqa_diamond::GpqaDiamondAdapter, hle::HleAdapter, metr::MetrAdapter,
+    osworld::OsworldAdapter, re_bench::ReBenchAdapter, rli::RliAdapter, swe_bench::SweBenchAdapter,
 };
 use agi4_core::evidence::Evidence;
 use std::fs;

@@ -316,11 +316,13 @@ mod tests {
         let evidence_vec = adapter.to_evidence(raw, &model).unwrap();
 
         for evidence in &evidence_vec {
-            assert!(evidence
-                .provenance
-                .source_url
-                .as_str()
-                .contains("arcprize.org"));
+            assert!(
+                evidence
+                    .provenance
+                    .source_url
+                    .as_str()
+                    .contains("arcprize.org")
+            );
             assert!(evidence.provenance.source_version.is_some());
             assert_eq!(
                 evidence.provenance.source_version.as_ref().unwrap(),
