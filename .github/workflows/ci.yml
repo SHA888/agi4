@@ -88,31 +88,48 @@ jobs:
       - name: Verify each adapter has fixtures and tests
         run: |
           set -e
-          # Check that METR adapter has fixtures
-          if [ ! -d "runner/tests/fixtures/metr" ]; then
-            echo "ERROR: METR adapter missing fixtures directory"
-            exit 1
-          fi
-          if [ ! -f "runner/tests/fixtures/metr/time-horizon-168h.json" ]; then
-            echo "ERROR: METR adapter missing fixture file"
-            exit 1
-          fi
-          # Verify fixture file is valid JSON
-          if ! jq . runner/tests/fixtures/metr/time-horizon-168h.json > /dev/null 2>&1; then
-            echo "ERROR: METR fixture is not valid JSON"
-            exit 1
-          fi
-          # Check that metr.rs exists
-          if [ ! -f "runner/crates/agi4-adapters/src/metr.rs" ]; then
-            echo "ERROR: METR adapter source file missing"
-            exit 1
-          fi
-          # Check for round-trip test in metr.rs
-          if ! grep -q "fn metr_round_trip" runner/crates/agi4-adapters/src/metr.rs; then
-            echo "ERROR: METR adapter missing round-trip test"
-            exit 1
-          fi
-          echo "✓ All adapters have fixtures and round-trip tests"
+          # Define all adapters
+          adapters=("metr" "arc-prize" "hle" "gpqa-diamond" "gdpval" "rli" "apex-agents" "osworld" "re-bench" "swe-bench")
+
+          for adapter in "${adapters[@]}"; do
+            # Convert kebab-case to snake_case for file names
+            file_adapter=$(echo "$adapter" | sed 's/-/_/g')
+
+            # Check that adapter has fixtures directory
+            if [ ! -d "runner/tests/fixtures/$adapter" ]; then
+              echo "ERROR: $adapter adapter missing fixtures directory"
+              exit 1
+            fi
+
+            # Check that at least one fixture file exists
+            if [ -z "$(ls runner/tests/fixtures/$adapter/*.json 2>/dev/null)" ]; then
+              echo "ERROR: $adapter adapter has no fixture JSON files"
+              exit 1
+            fi
+
+            # Verify all fixture files are valid JSON
+            for fixture in runner/tests/fixtures/$adapter/*.json; do
+              if ! jq . "$fixture" > /dev/null 2>&1; then
+                echo "ERROR: $fixture is not valid JSON"
+                exit 1
+              fi
+            done
+
+            # Check that adapter source file exists
+            if [ ! -f "runner/crates/agi4-adapters/src/${file_adapter}.rs" ]; then
+              echo "ERROR: $adapter adapter source file missing"
+              exit 1
+            fi
+
+            # Check for round-trip test in adapter source
+            if ! grep -q "round.trip\|fn.*_round_trip" "runner/crates/agi4-adapters/src/${file_adapter}.rs"; then
+              echo "ERROR: $adapter adapter missing round-trip test"
+              exit 1
+            fi
+
+            echo "✓ $adapter adapter has fixtures and round-trip tests"
+          done
+          echo "✓ All 10 adapters have fixtures and round-trip tests"
 
   spec-traceability:
     name: Spec-to-Code Traceability
@@ -121,7 +138,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Verify threshold constants are referenced
         run: |
-          cd crates/agi4-core
+          cd runner/crates/agi4-core
           # Check that every threshold constant in threshold.rs is referenced in evaluations
           set -e
           grep -oP 'pub const \K\w+' src/threshold.rs | while read const; do
