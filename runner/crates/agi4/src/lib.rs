@@ -3,6 +3,9 @@
 //! The `agi4` facade crate provides a curated public API for attestation logic,
 //! verdict types, and report rendering. Version tracks SPEC.md exactly.
 
+/// Fixture-based evidence loading for testing.
+pub mod fixtures;
+
 /// Live upstream source fetching and attestation.
 pub mod live;
 

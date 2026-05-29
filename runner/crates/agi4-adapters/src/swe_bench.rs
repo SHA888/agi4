@@ -333,13 +333,11 @@ mod tests {
         let evidence_vec = adapter.to_evidence(raw, &model).unwrap();
         let evidence = &evidence_vec[0];
 
-        assert!(
-            evidence
-                .provenance
-                .source_url
-                .as_str()
-                .contains("swe-bench")
-        );
+        assert!(evidence
+            .provenance
+            .source_url
+            .as_str()
+            .contains("swe-bench"));
         assert!(evidence.provenance.source_version.is_some());
         assert_eq!(
             evidence.provenance.source_version.as_ref().unwrap(),

@@ -15,10 +15,10 @@ name = "agi4"
 path = "src/main.rs"
 
 [dependencies]
-agi4-core = "0.1.0"
-agi4-schema = "0.1.0"
-agi4-adapters = "0.1.0"
-agi4-report = "0.1.0"
+agi4-core = { path = "../agi4-core" }
+agi4-schema = { path = "../agi4-schema" }
+agi4-adapters = { path = "../agi4-adapters" }
+agi4-report = { path = "../agi4-report" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 clap = { version = "4.4", features = ["derive"] }

@@ -436,11 +436,9 @@ mod tests {
         let evidence = vec![make_evidence("arc-agi-2", 0.95, true)];
         let result = consistency_check(&evidence, &statuses);
         assert!(!result.passed);
-        assert!(
-            result
-                .failed_rules
-                .contains(&"rule_1_insufficient_data_masking".to_string())
-        );
+        assert!(result
+            .failed_rules
+            .contains(&"rule_1_insufficient_data_masking".to_string()));
     }
 
     #[test]
@@ -459,11 +457,9 @@ mod tests {
         ];
         let result = consistency_check(&evidence, &statuses);
         assert!(!result.passed);
-        assert!(
-            result
-                .failed_rules
-                .contains(&"rule_2_variance_bound".to_string())
-        );
+        assert!(result
+            .failed_rules
+            .contains(&"rule_2_variance_bound".to_string()));
     }
 
     #[test]
@@ -483,11 +479,9 @@ mod tests {
         let result = consistency_check(&evidence, &statuses);
         assert!(!result.passed);
         // Rule 2 (variance bound) should fail due to extreme imbalance
-        assert!(
-            result
-                .failed_rules
-                .contains(&"rule_2_variance_bound".to_string())
-        );
+        assert!(result
+            .failed_rules
+            .contains(&"rule_2_variance_bound".to_string()));
     }
 
     #[test]

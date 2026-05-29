@@ -18,7 +18,7 @@ pub use evaluators::{
     evaluate_environmental_transfer, evaluate_generality,
 };
 pub use evidence::Evidence;
-pub use verdict::{Verdict, verdict};
+pub use verdict::{verdict, Verdict};
 
 #[cfg(test)]
 mod tests {

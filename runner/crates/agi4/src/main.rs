@@ -98,17 +98,81 @@ fn main() {
 
 fn attest_from_fixture(
     model: &str,
-    _fixture_dir: &str,
+    fixture_dir: &str,
 ) -> Result<String, Box<dyn std::error::Error>> {
+    use agi4::consistency_check;
+    use agi4::core::ConjunctStatus;
+    use agi4::fixtures::load_evidence_from_fixtures;
+    use agi4_core::evaluators::{
+        evaluate_autonomous_agency, evaluate_economic_substitutability,
+        evaluate_environmental_transfer, evaluate_generality,
+    };
     use agi4_schema::{
-        ConjunctReport, ConjunctsOutput, ConsistencyCheckOutput, ModelMetadata, VerdictOutput,
+        ConjunctReport, ConjunctsOutput, ConsistencyCheckOutput, EvidenceReport, ModelMetadata,
+        VerdictOutput,
     };
     use chrono::Utc;
+
+    let now = Utc::now();
+    let run_timestamp = now.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+
+    // Load evidence from fixture directory
+    let all_evidence = load_evidence_from_fixtures(fixture_dir, model)?;
+
+    // Evaluate each conjunct through agi4-core evaluators
+    let generality_status = evaluate_generality(&all_evidence);
+    let econ_status = evaluate_economic_substitutability(&all_evidence);
+    let env_status = evaluate_environmental_transfer(&all_evidence);
+    let agency_status = evaluate_autonomous_agency(&all_evidence);
+
+    let conjunct_statuses = [generality_status, econ_status, env_status, agency_status];
+
+    // Run consistency check with real evidence
+    let consistency_result = consistency_check(&all_evidence, &conjunct_statuses);
+
+    // Build verdict: all 4 conjuncts must pass AND consistency check must pass
+    let overall_verdict = if conjunct_statuses.iter().all(|s| *s == ConjunctStatus::Pass)
+        && consistency_result.passed
+    {
+        "attested"
+    } else {
+        "not_attested"
+    };
+
+    // Convert statuses to strings for output
+    fn status_to_string(status: ConjunctStatus) -> String {
+        format!("{:?}", status).to_lowercase()
+    }
+
+    // For fixture path, report evidence count per conjunct without detailed evidence reports
+    // (detailed evidence reporting requires threshold/floor lookup which is out of scope for task 2.15)
+    let generality_evidence: Vec<EvidenceReport> = vec![];
+    let econ_evidence: Vec<EvidenceReport> = vec![];
+    let env_evidence: Vec<EvidenceReport> = vec![];
+    let agency_evidence: Vec<EvidenceReport> = vec![];
+
+    let verdict_reasons = vec![
+        format!("Generality: {}", status_to_string(generality_status)),
+        format!(
+            "Economic Substitutability: {}",
+            status_to_string(econ_status)
+        ),
+        format!("Environmental Transfer: {}", status_to_string(env_status)),
+        format!("Autonomous Agency: {}", status_to_string(agency_status)),
+        format!(
+            "Consistency Check: {}",
+            if consistency_result.passed {
+                "pass"
+            } else {
+                "fail"
+            }
+        ),
+    ];
 
     let verdict_output = VerdictOutput {
         spec_version: agi4::SPEC_VERSION.to_string(),
         runner_version: agi4::VERSION.to_string(),
-        run_timestamp: Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
+        run_timestamp,
         model: ModelMetadata {
             id: model.to_string(),
             provider: None,
@@ -116,39 +180,45 @@ fn attest_from_fixture(
         },
         conjuncts: ConjunctsOutput {
             generality: ConjunctReport {
-                status: "insufficient_data".to_string(),
-                evidence: vec![],
+                status: status_to_string(generality_status),
+                evidence: generality_evidence,
                 margins: None,
             },
             economic_substitutability: ConjunctReport {
-                status: "insufficient_data".to_string(),
-                evidence: vec![],
+                status: status_to_string(econ_status),
+                evidence: econ_evidence,
                 margins: None,
             },
             environmental_transfer: ConjunctReport {
-                status: "insufficient_data".to_string(),
-                evidence: vec![],
+                status: status_to_string(env_status),
+                evidence: env_evidence,
                 margins: None,
             },
             autonomous_agency: ConjunctReport {
-                status: "insufficient_data".to_string(),
-                evidence: vec![],
+                status: status_to_string(agency_status),
+                evidence: agency_evidence,
                 margins: None,
             },
         },
         consistency_check: ConsistencyCheckOutput {
-            status: "pass".to_string(),
-            failed_rules: vec![],
-            detail: None,
+            status: if consistency_result.passed {
+                "pass"
+            } else {
+                "fail"
+            }
+            .to_string(),
+            failed_rules: consistency_result
+                .failed_rules
+                .iter()
+                .map(|r| r.to_string())
+                .collect(),
+            detail: consistency_result.detail.map(|d| d.to_string()),
         },
-        verdict: "insufficient_data".to_string(),
-        verdict_reasons: vec![
-            "generality: insufficient data".to_string(),
-            "economic_substitutability: insufficient data".to_string(),
-            "environmental_transfer: insufficient data".to_string(),
-            "autonomous_agency: insufficient data".to_string(),
+        verdict: overall_verdict.to_string(),
+        verdict_reasons,
+        known_gaps_acknowledged: vec![
+            "Fixture-based attestation uses only provided evidence".to_string()
         ],
-        known_gaps_acknowledged: vec!["All conjuncts require evidence data".to_string()],
     };
 
     Ok(serde_json::to_string_pretty(&verdict_output)?)
