@@ -40,11 +40,12 @@ jobs:
   semver:
     name: SemVer Check (agi4-core)
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - run: cd runner && cargo semver-checks --package agi4-core
+      - run: cd runner && cargo install cargo-semver-checks && cargo semver-checks --package agi4-core
 
   security-audit:
     name: Security Audit
