@@ -26,8 +26,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-        with:
-          working-directory: runner
       - run: cd runner && cargo clippy --all-targets --all-features -- -D warnings
 
   test:
@@ -37,8 +35,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-        with:
-          working-directory: runner
       - run: cd runner && cargo test --workspace
 
   semver:
@@ -48,8 +44,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-        with:
-          working-directory: runner
       - run: cd runner && cargo semver-checks --package agi4-core
 
   security-audit:
@@ -59,8 +53,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-        with:
-          working-directory: runner
       - run: cd runner && cargo audit
 
   deny:
@@ -77,8 +69,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-        with:
-          working-directory: runner
       - run: cd runner && cargo test -p agi4-schema --tests -- --nocapture
 
   adapter-fixtures:
@@ -88,8 +78,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-        with:
-          working-directory: runner
       - run: cd runner && cargo test -p agi4-adapters --tests
 
   adapter-fixture-validation:
