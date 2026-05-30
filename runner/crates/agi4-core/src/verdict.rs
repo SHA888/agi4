@@ -354,9 +354,8 @@ mod property_tests {
                     for consistency in &[true, false] {
                         let statuses = [ConjunctStatus::Pass, *e, *env, *a];
                         let v = verdict(&statuses, *consistency);
-                        let has_insufficient = [*e, *env, *a]
-                            .iter()
-                            .any(|s| *s == ConjunctStatus::InsufficientData);
+                        let has_insufficient =
+                            [*e, *env, *a].contains(&ConjunctStatus::InsufficientData);
                         if has_insufficient {
                             assert!(matches!(v, Verdict::InsufficientData { .. }));
                         }

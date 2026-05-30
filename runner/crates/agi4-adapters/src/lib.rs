@@ -349,12 +349,11 @@ impl CachingFetcher {
             return false;
         }
 
-        if let Ok(metadata) = fs::metadata(cache_path) {
-            if let Ok(modified) = metadata.modified() {
-                if let Ok(elapsed) = modified.elapsed() {
-                    return elapsed.as_secs() < self.cache_ttl_secs;
-                }
-            }
+        if let Ok(metadata) = fs::metadata(cache_path)
+            && let Ok(modified) = metadata.modified()
+            && let Ok(elapsed) = modified.elapsed()
+        {
+            return elapsed.as_secs() < self.cache_ttl_secs;
         }
 
         false
