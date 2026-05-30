@@ -1,0 +1,28 @@
+# cargo-deny configuration for agi4
+# v2 format: https://embarkstudios.github.io/cargo-deny/
+
+[advisories]
+db-path = "~/.cargo/advisory-db"
+db-urls = ["https://github.com/rustsec/advisory-db"]
+
+[licenses]
+# Allow common open-source licenses
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "ISC",
+    "MPL-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "Unicode-3.0",
+    "Unlicense",
+]
+# Ignore licenses for private crates (workspace crates)
+[licenses.private]
+ignore = true
+
+[bans]
+# Allow multiple versions of the same crate
+multiple-versions = "allow"
+
+[sources]
