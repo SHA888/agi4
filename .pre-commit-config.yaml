@@ -38,6 +38,22 @@ repos:
         pass_filenames: false
         stages: [commit]
 
+  # Cargo checks (local hooks)
+  - repo: local
+    hooks:
+      - id: audit
+        name: Cargo audit
+        entry: bash -c 'cd runner && cargo audit'
+        language: system
+        pass_filenames: false
+        stages: [commit]
+      - id: semver
+        name: Semver check (agi4-core)
+        entry: bash -c 'cd runner && cargo semver-checks --package agi4-core'
+        language: system
+        pass_filenames: false
+        stages: [commit]
+
   # Commit message linting
   - repo: https://github.com/commitizen-tools/commitizen
     rev: v3.12.0
