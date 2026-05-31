@@ -8,6 +8,7 @@ use crate::{ModelId, Source};
 use agi4_core::evidence::{
     BoundedFraction, Evidence, MeasurementId, Provenance, SourceId, SourceValue,
 };
+use agi4_core::sources::autonomous_agency;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fmt;
@@ -73,7 +74,7 @@ impl Source for SweBenchAdapter {
     type Error = SweBenchError;
 
     fn id(&self) -> SourceId {
-        SourceId::new("swe-bench")
+        SourceId::new(autonomous_agency::SWE_BENCH_VERIFIED)
     }
 
     fn endpoint(&self) -> &Url {
@@ -123,14 +124,14 @@ mod tests {
     #[test]
     fn swe_bench_adapter_new() {
         let adapter = SweBenchAdapter::new().expect("should create adapter");
-        assert_eq!(adapter.id().as_str(), "swe-bench");
+        assert_eq!(adapter.id().as_str(), "swe-bench-verified");
         assert!(adapter.endpoint().as_str().contains("swe-bench"));
     }
 
     #[test]
     fn swe_bench_adapter_default() {
         let adapter = SweBenchAdapter::default();
-        assert_eq!(adapter.id().as_str(), "swe-bench");
+        assert_eq!(adapter.id().as_str(), "swe-bench-verified");
     }
 
     #[test]
@@ -192,7 +193,7 @@ mod tests {
         let evidence = &evidence_vec[0];
 
         // Verify metadata
-        assert_eq!(evidence.source.as_str(), "swe-bench");
+        assert_eq!(evidence.source.as_str(), "swe-bench-verified");
         assert_eq!(evidence.measurement.as_str(), "pass@5-rate");
         assert_eq!(evidence.reliability_percentile, 80);
 
@@ -365,7 +366,7 @@ mod tests {
         // Verify
         assert_eq!(evidence_vec.len(), 1);
         let evidence = &evidence_vec[0];
-        assert_eq!(evidence.source.as_str(), "swe-bench");
+        assert_eq!(evidence.source.as_str(), "swe-bench-verified");
         assert_eq!(evidence.reliability_percentile, 80);
 
         match &evidence.value {

@@ -736,4 +736,17 @@ mod tests {
         fn assert_send_sync<T: Send + Sync>() {}
         assert_send_sync::<CachingFetcher>();
     }
+
+    #[test]
+    fn swe_bench_uses_canonical_source_id() {
+        // Verify SWE-Bench adapter uses canonical source ID constant, not hardcoded string.
+        // This prevents silent evidence routing failures due to ID mismatches (task 2.17).
+        let adapter =
+            swe_bench::SweBenchAdapter::new().expect("SWE-bench adapter should initialize");
+        assert_eq!(
+            adapter.id().as_str(),
+            "swe-bench-verified",
+            "SWE-bench adapter must return canonical 'swe-bench-verified' ID"
+        );
+    }
 }
