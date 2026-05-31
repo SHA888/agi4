@@ -14,6 +14,7 @@ use url::Url;
 
 /// RE-Bench benchmark data: AI research engineering task success rate.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct ReBenchRaw {
     /// Task success rate as a fraction (0.0 to 1.0).
     pub task_success_rate: f64,

@@ -14,6 +14,7 @@ use url::Url;
 
 /// METR time-horizon measurement: 80%-quantile hours for autonomous task completion.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct MetrRaw {
     /// The 80%-time horizon value in hours.
     pub value: f64,

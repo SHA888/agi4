@@ -14,6 +14,7 @@ use url::Url;
 
 /// OSWorld benchmark data: task completion rate with no domain-specific scaffolding.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct OsworldRaw {
     /// Task completion rate as a fraction (0.0 to 1.0).
     pub task_completion_rate: f64,

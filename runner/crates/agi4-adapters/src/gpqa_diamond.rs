@@ -14,6 +14,7 @@ use url::Url;
 
 /// GPQA Diamond benchmark data: accuracy on the evaluation suite.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct GpqaDiamondRaw {
     /// Accuracy as a fraction (0.0 to 1.0).
     pub accuracy: f64,

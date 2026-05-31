@@ -16,6 +16,7 @@ use url::Url;
 
 /// SWE-bench Verified benchmark data: pass@k success rate.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct SweBenchRaw {
     /// The value of k in pass@k. Must be >= 5.
     pub pass_at_k: u32,

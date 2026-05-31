@@ -14,6 +14,7 @@ use url::Url;
 
 /// GDPval benchmark data: win+tie rate vs industry experts.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct GdpvalRaw {
     /// Win+tie rate as a fraction (0.0 to 1.0).
     pub win_tie_rate: f64,

@@ -14,6 +14,7 @@ use url::Url;
 
 /// APEX-Agents benchmark data: task completion rate.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct ApexAgentsRaw {
     /// Task completion rate as a fraction (0.0 to 1.0).
     pub task_completion_rate: f64,

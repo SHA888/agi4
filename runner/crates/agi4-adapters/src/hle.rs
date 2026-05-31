@@ -14,6 +14,7 @@ use url::Url;
 
 /// HLE benchmark data: overall accuracy on the evaluation suite.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct HleRaw {
     /// Overall accuracy as a fraction (0.0 to 1.0).
     pub overall_accuracy: f64,

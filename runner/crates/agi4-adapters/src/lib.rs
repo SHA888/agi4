@@ -869,4 +869,56 @@ mod tests {
 
         let _ = fs::remove_dir_all(&temp_dir);
     }
+
+    #[test]
+    fn adapter_raw_structs_deny_unknown_fields() {
+        // Verify that all adapter raw structs have deny_unknown_fields enabled.
+        // This enforces Parse-Don't-Validate: unknown upstream schema changes fail
+        // immediately rather than being silently ignored.
+
+        // Test METR adapter rejects unknown fields
+        let valid_metr = r#"{"value": 168.0}"#;
+        assert!(
+            serde_json::from_str::<metr::MetrRaw>(valid_metr).is_ok(),
+            "valid METR data should parse"
+        );
+
+        let invalid_metr = r#"{"value": 168.0, "unknown_field": "should_fail"}"#;
+        assert!(
+            serde_json::from_str::<metr::MetrRaw>(invalid_metr).is_err(),
+            "METR data with unknown field should be rejected"
+        );
+
+        // Test ARC Prize adapter rejects unknown fields in nested structs
+        let valid_arc = r#"{"arc_agi_2": {"pass_rate": 0.85}, "arc_agi_3": {"pass_rate": 0.90}}"#;
+        assert!(
+            serde_json::from_str::<arc_prize::ArcPrizeRaw>(valid_arc).is_ok(),
+            "valid ARC Prize data should parse"
+        );
+
+        let invalid_arc_top = r#"{"arc_agi_2": {"pass_rate": 0.85}, "arc_agi_3": {"pass_rate": 0.90}, "extra_field": "fail"}"#;
+        assert!(
+            serde_json::from_str::<arc_prize::ArcPrizeRaw>(invalid_arc_top).is_err(),
+            "ARC Prize data with unknown top-level field should be rejected"
+        );
+
+        let invalid_arc_nested = r#"{"arc_agi_2": {"pass_rate": 0.85, "extra": "fail"}, "arc_agi_3": {"pass_rate": 0.90}}"#;
+        assert!(
+            serde_json::from_str::<arc_prize::ArcPrizeRaw>(invalid_arc_nested).is_err(),
+            "ARC Prize data with unknown nested field should be rejected"
+        );
+
+        // Test HLE adapter rejects unknown fields
+        let valid_hle = r#"{"overall_accuracy": 0.75}"#;
+        assert!(
+            serde_json::from_str::<hle::HleRaw>(valid_hle).is_ok(),
+            "valid HLE data should parse"
+        );
+
+        let invalid_hle = r#"{"overall_accuracy": 0.75, "noise": "fail"}"#;
+        assert!(
+            serde_json::from_str::<hle::HleRaw>(invalid_hle).is_err(),
+            "HLE data with unknown field should be rejected"
+        );
+    }
 }

@@ -14,6 +14,7 @@ use url::Url;
 
 /// RLI benchmark data: completion rate at expert-comparable quality.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct RliRaw {
     /// Completion rate as a fraction (0.0 to 1.0).
     pub completion_rate: f64,

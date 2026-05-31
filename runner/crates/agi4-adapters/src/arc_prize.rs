@@ -15,6 +15,7 @@ use url::Url;
 
 /// ARC Prize leaderboard data: pass@1 scores for both benchmarks.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct ArcPrizeRaw {
     /// ARC-AGI-2 private split pass@1 score.
     pub arc_agi_2: ArcAgi2Score,
@@ -24,6 +25,7 @@ pub struct ArcPrizeRaw {
 
 /// ARC-AGI-2 benchmark score.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct ArcAgi2Score {
     /// Pass@1 accuracy on private split (0.0 to 1.0).
     pub pass_rate: f64,
@@ -31,6 +33,7 @@ pub struct ArcAgi2Score {
 
 /// ARC-AGI-3 benchmark score.
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct ArcAgi3Score {
     /// Pass@1 accuracy on interactive task private split (0.0 to 1.0).
     pub pass_rate: f64,
