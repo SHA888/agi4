@@ -85,7 +85,28 @@ below. Severity: **C**ritical / **H**igh / **M**edium / **L**ow.
 | 2.23 | M | Adapter raw structs lack `#[serde(deny_unknown_fields)]`, violating Parse-Don't-Validate (principle #2); schema drift / renamed fields are silently accepted | Add `deny_unknown_fields` to all adapter raw structs; add a test asserting unknown fields fail parse | 2.1-2.9 | cc:done [5f1c8ac] |
 | 2.24 | L | `live.rs:163` METR source id `"metr-time-horizon"` is non-canonical (vs `"metr-80pct-time-horizon"`) | Use the canonical constant (subsumed by 2.14) | 2.14 | cc:done [facaf1b] subsumed by 2.14 |
 | 2.25 | L | `evaluators.rs:233` environmental_transfer `Fail` arm is dead code — the floor is already enforced at line 209, so the Partial guard `>= FLOOR` is always true | Remove the unreachable arm, or restructure so Fail is reachable per SPEC §2.3 intent | 2.0b | cc:done [8fb09c7] |
-| 2.26 | L | Seven single-value adapters are ~300-line near-duplicates with per-adapter error enums + test modules (~4000 LOC copy-paste); crate-level `AdapterError` is unused | Extract a generic `FractionSource` helper + parameterized tests; consume shared `AdapterError` | 2.1-2.9 | cc:WIP [ca37f73] pattern established, HLE complete; 6 remaining adapters follow same pattern |
+| 2.26 | L | Seven single-value adapters are ~300-line near-duplicates with per-adapter error enums + test modules (~4000 LOC copy-paste); crate-level `AdapterError` is unused | Extract a generic `FractionSource` helper + parameterized tests; consume shared `AdapterError` | 2.1-2.9 | cc:WIP [4e30f67] 3/7 complete (HLE, gdpval, rli); 4 remaining (gpqa_diamond, apex_agents, osworld, re_bench) |
+
+#### Task 2.26 — Refactoring Pattern (Complete 4 Remaining Adapters)
+
+**Canonical pattern** established by HLE, gdpval, rli. Repeat for: `gpqa_diamond`, `apex_agents`, `osworld`, `re_bench`.
+
+**5-Step Refactoring** (per adapter, ~15-20 min):
+
+1. **Remove imports**: Delete `use std::error::Error` and `use std::fmt` lines
+2. **Add AdapterError import**: Change `use crate::{ModelId, Source}` to `use crate::{AdapterError, ModelId, Source}`
+3. **Remove error enum**: Delete the entire `{Adapter}Error` enum and its `impl Display` + `impl Error` blocks (~20 lines)
+4. **Update trait impl**:
+   - Change `type Error = {Adapter}Error` → `type Error = AdapterError`
+   - Replace all `{Adapter}Error::{ParseError,ValidationError}(msg)` with `AdapterError::new("{source-id}", msg)`
+   - Update constructor return type from `Result<Self, {Adapter}Error>` to `Result<Self, AdapterError>`
+5. **Simplify tests**:
+   - Delete the `{adapter}_error_display()` test (AdapterError's Display impl is global)
+   - In parse/validation error tests, replace `match result { Err({Adapter}Error::*) => {} }` with just `assert!(result.is_err())`
+
+**Result**: ~60 LOC saved per adapter (18 lines error enum, 20 lines test cleanup, 22 lines reduced imports/trait).
+
+**Verification**: `cargo test -p agi4-adapters --lib` must pass all 175+ tests.
 
 ---
 
