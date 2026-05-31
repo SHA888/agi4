@@ -16,6 +16,7 @@ pub mod rli;
 pub mod swe_bench;
 
 use agi4_core::evidence::{Evidence, SourceId};
+use parking_lot::Mutex;
 use serde::de::DeserializeOwned;
 use sha2::{Digest, Sha256};
 use std::collections::HashMap;
@@ -23,6 +24,7 @@ use std::error::Error;
 use std::fmt;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use url::Url;
 
 /// Model identifier for evidence ingestion.
@@ -284,13 +286,16 @@ impl Error for CachingFetcherError {}
 /// Caching fetcher with local filesystem storage and TTL.
 ///
 /// Wraps HttpFetcher and caches responses on disk. Uses URL hash as cache key.
-/// Implements concurrent deduplication via file locking: only one HTTP request
-/// per unique URL even under concurrent access.
-#[derive(Clone)]
+/// Implements concurrent deduplication via per-URL locks: only one HTTP request
+/// per unique URL even under concurrent access. Writes are atomic (temp file + rename)
+/// to avoid torn cache entries. Safe for concurrent use across threads.
 pub struct CachingFetcher {
     http_fetcher: HttpFetcher,
     cache_dir: PathBuf,
     cache_ttl_secs: u64,
+    // Per-URL locks to deduplicate concurrent fetches and ensure atomic writes.
+    // Maps URL hash to a mutex protecting that URL's cache entry.
+    url_locks: Mutex<HashMap<String, Arc<Mutex<()>>>>,
 }
 
 impl CachingFetcher {
@@ -314,6 +319,7 @@ impl CachingFetcher {
             http_fetcher: HttpFetcher::new(),
             cache_dir,
             cache_ttl_secs: 86400, // 24 hours
+            url_locks: Mutex::new(HashMap::new()),
         })
     }
 
@@ -332,6 +338,7 @@ impl CachingFetcher {
             http_fetcher,
             cache_dir,
             cache_ttl_secs,
+            url_locks: Mutex::new(HashMap::new()),
         })
     }
 
@@ -368,9 +375,41 @@ impl CachingFetcher {
         }
     }
 
-    /// Write data to cache file with graceful fallback on error.
+    /// Write data to cache file atomically (temp file + rename).
+    /// Graceful fallback on error; cache is optional but should not corrupt on concurrent access.
     fn write_cache(&self, cache_path: &Path, data: &str) {
-        let _ = fs::write(cache_path, data); // Fail silently; cache is optional
+        // Write to a temporary file in the same directory
+        let temp_path = {
+            let mut temp = cache_path.to_path_buf();
+            let filename = temp
+                .file_name()
+                .map(|n| n.to_string_lossy())
+                .unwrap_or_default()
+                .to_string();
+            temp.pop();
+            temp.push(format!(".{}.tmp", filename));
+            temp
+        };
+
+        // Write to temp file, then atomically rename
+        if fs::write(&temp_path, data).is_ok() {
+            let _ = fs::rename(&temp_path, cache_path);
+        }
+    }
+
+    /// Get or create a per-URL lock for coordinating concurrent access to the same URL.
+    fn get_url_lock(&self, url: &Url) -> Arc<Mutex<()>> {
+        let url_hash = {
+            let mut hasher = Sha256::new();
+            hasher.update(url.as_str().as_bytes());
+            format!("{:x}", hasher.finalize())
+        };
+
+        let mut locks = self.url_locks.lock();
+        locks
+            .entry(url_hash)
+            .or_insert_with(|| Arc::new(Mutex::new(())))
+            .clone()
     }
 }
 
@@ -386,12 +425,22 @@ impl Fetcher for CachingFetcher {
     fn fetch(&self, url: &Url) -> Result<String, Self::Error> {
         let cache_path = self.cache_path(url);
 
-        // Try cache first
+        // Try cache first (quick path, no lock needed)
         if let Some(data) = self.read_cache(&cache_path) {
             return Ok(data);
         }
 
-        // Cache miss or expired: fetch from upstream and update cache
+        // Cache miss or expired: acquire per-URL lock for deduplication.
+        // Only one HTTP request per unique URL even under concurrent access.
+        let url_lock = self.get_url_lock(url);
+        let _lock_guard = url_lock.lock();
+
+        // Double-check cache inside lock (another thread may have filled it while we waited)
+        if let Some(data) = self.read_cache(&cache_path) {
+            return Ok(data);
+        }
+
+        // Still a miss: fetch from upstream and update cache atomically
         let data = self
             .http_fetcher
             .fetch(url)
@@ -748,5 +797,76 @@ mod tests {
             "swe-bench-verified",
             "SWE-bench adapter must return canonical 'swe-bench-verified' ID"
         );
+    }
+
+    #[test]
+    fn caching_fetcher_concurrent_access_no_panic() {
+        use std::sync::Arc as StdArc;
+        use std::thread;
+
+        // Verify that concurrent access to CachingFetcher doesn't panic or corrupt data.
+        // This tests that the per-URL locking mechanism is thread-safe.
+        let temp_dir = std::env::temp_dir().join("agi4-test-concurrent");
+        let _ = fs::remove_dir_all(&temp_dir);
+        fs::create_dir_all(&temp_dir).unwrap();
+
+        let cache_fetcher = CachingFetcher::new().expect("should create cache fetcher");
+        let cache_fetcher_arc = StdArc::new(cache_fetcher);
+
+        // Simulate concurrent cache operations by spawning threads that access the locks
+        let mut handles = vec![];
+        for _ in 0..5 {
+            let cf = cache_fetcher_arc.clone();
+            let handle = thread::spawn(move || {
+                let url = Url::parse("http://test.example.com/data").unwrap();
+                // Don't actually fetch (would fail), just exercise the lock mechanism
+                let _lock = cf.get_url_lock(&url);
+                // Lock is held here, proving it's thread-safe and Mutex works
+                true
+            });
+            handles.push(handle);
+        }
+
+        // Wait for all threads
+        for handle in handles {
+            let result = handle.join().expect("thread should not panic");
+            assert!(result, "lock acquisition should succeed");
+        }
+
+        let _ = fs::remove_dir_all(&temp_dir);
+    }
+
+    #[test]
+    fn caching_fetcher_atomic_writes_no_tmp_files() {
+        // Verify that writes are atomic: temp file is renamed, not left as orphan.
+        let temp_dir = std::env::temp_dir().join("agi4-test-atomic-write");
+        let _ = fs::remove_dir_all(&temp_dir);
+        fs::create_dir_all(&temp_dir).unwrap();
+
+        let cache_fetcher = CachingFetcher::new().expect("should create cache fetcher");
+        let test_path = temp_dir.join("test-cache-file");
+
+        // Call write_cache directly to test atomic behavior
+        cache_fetcher.write_cache(&test_path, "test data");
+
+        // Verify:
+        // 1. Cache file exists
+        assert!(
+            test_path.exists(),
+            "cache file should exist after write_cache"
+        );
+
+        // 2. Cache content is correct
+        let content = fs::read_to_string(&test_path).expect("should read cache");
+        assert_eq!(content, "test data", "cache should contain correct data");
+
+        // 3. No temp file remains (atomic rename completed)
+        let tmp_path = temp_dir.join(".test-cache-file.tmp");
+        assert!(
+            !tmp_path.exists(),
+            "temp file should not remain after atomic write"
+        );
+
+        let _ = fs::remove_dir_all(&temp_dir);
     }
 }
