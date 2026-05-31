@@ -1,0 +1,43 @@
+{
+  "spec_version": "0.1.0",
+  "runner_version": "0.1.0",
+  "run_timestamp": "2026-05-31T08:52:48Z",
+  "model": {
+    "id": "claude-3.5-sonnet",
+    "provider": null,
+    "version_or_date": null
+  },
+  "conjuncts": {
+    "generality": {
+      "status": "pass",
+      "margins": null
+    },
+    "economic_substitutability": {
+      "status": "pass",
+      "margins": null
+    },
+    "environmental_transfer": {
+      "status": "pass",
+      "margins": null
+    },
+    "autonomous_agency": {
+      "status": "pass",
+      "margins": null
+    }
+  },
+  "consistency_check": {
+    "status": "pass",
+    "detail": null
+  },
+  "verdict": "attested",
+  "verdict_reasons": [
+    "Generality: pass",
+    "Economic Substitutability: pass",
+    "Environmental Transfer: pass",
+    "Autonomous Agency: pass",
+    "Consistency Check: pass"
+  ],
+  "known_gaps_acknowledged": [
+    "Fixture-based attestation uses only provided evidence"
+  ]
+}
