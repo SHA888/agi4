@@ -54,9 +54,13 @@ fn main() {
                 // Wire live attestation: fetch from upstream sources concurrently
                 // with timeout=30s and retry=3
                 match agi4::live::attest_live(&model) {
-                    Ok(verdict_json) => {
-                        println!("{}", serde_json::to_string_pretty(&verdict_json).unwrap())
-                    }
+                    Ok(verdict_json) => match serde_json::to_string_pretty(&verdict_json) {
+                        Ok(json_str) => println!("{}", json_str),
+                        Err(e) => {
+                            eprintln!("Error serializing verdict to JSON: {}", e);
+                            std::process::exit(1);
+                        }
+                    },
                     Err(e) => {
                         eprintln!("Error during live attestation: {}", e);
                         std::process::exit(1);

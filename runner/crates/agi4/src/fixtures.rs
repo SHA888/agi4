@@ -75,7 +75,13 @@ pub fn load_evidence_from_fixtures(
         // Load evidence from the appropriate adapter
         let source_evidence = match source_name.as_str() {
             "metr" => {
-                let adapter = MetrAdapter::default();
+                let adapter = match MetrAdapter::new() {
+                    Ok(a) => a,
+                    Err(e) => {
+                        eprintln!("warning: failed to create METR adapter: {}", e);
+                        continue;
+                    }
+                };
                 match adapter.parse(&json_content) {
                     Ok(raw) => match adapter.to_evidence(raw, &model) {
                         Ok(evidence) => evidence,
