@@ -3,13 +3,11 @@
 //! Ingests overall accuracy from the Humanity's Last Exam benchmark.
 //! Returns a single Fraction value representing performance on the evaluation suite.
 
-use crate::{ModelId, Source};
+use crate::{AdapterError, ModelId, Source};
 use agi4_core::evidence::{
     BoundedFraction, Evidence, MeasurementId, Provenance, SourceId, SourceValue,
 };
 use serde::{Deserialize, Serialize};
-use std::error::Error;
-use std::fmt;
 use url::Url;
 
 /// HLE benchmark data: overall accuracy on the evaluation suite.
@@ -20,26 +18,6 @@ pub struct HleRaw {
     pub overall_accuracy: f64,
 }
 
-/// Error type for HLE adapter operations.
-#[derive(Debug, Clone)]
-pub enum HleError {
-    /// JSON parsing failed.
-    ParseError(String),
-    /// Value validation failed (e.g., out-of-bounds accuracy).
-    ValidationError(String),
-}
-
-impl fmt::Display for HleError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::ParseError(msg) => write!(f, "HLE parse error: {}", msg),
-            Self::ValidationError(msg) => write!(f, "HLE validation error: {}", msg),
-        }
-    }
-}
-
-impl Error for HleError {}
-
 /// HLE adapter for the overall accuracy measurement.
 pub struct HleAdapter {
     /// Canonical HLE endpoint (CAIS-operated).
@@ -48,9 +26,9 @@ pub struct HleAdapter {
 
 impl HleAdapter {
     /// Create a new HLE adapter with the canonical endpoint.
-    pub fn new() -> Result<Self, HleError> {
+    pub fn new() -> Result<Self, AdapterError> {
         let endpoint = Url::parse("https://humlastexam.cais.net/api/results")
-            .map_err(|e| HleError::ParseError(format!("invalid endpoint URL: {}", e)))?;
+            .map_err(|e| AdapterError::new("hle", format!("invalid endpoint URL: {}", e)))?;
         Ok(Self { endpoint })
     }
 
@@ -68,7 +46,7 @@ impl Default for HleAdapter {
 
 impl Source for HleAdapter {
     type Raw = HleRaw;
-    type Error = HleError;
+    type Error = AdapterError;
 
     fn id(&self) -> SourceId {
         SourceId::new("hle")
@@ -80,13 +58,13 @@ impl Source for HleAdapter {
 
     fn parse(&self, raw: &str) -> Result<Self::Raw, Self::Error> {
         serde_json::from_str::<HleRaw>(raw)
-            .map_err(|e| HleError::ParseError(format!("failed to deserialize JSON: {}", e)))
+            .map_err(|e| AdapterError::new("hle", format!("failed to deserialize JSON: {}", e)))
     }
 
     fn to_evidence(&self, raw: Self::Raw, _model: &ModelId) -> Result<Vec<Evidence>, Self::Error> {
         // Validate and construct BoundedFraction
         let accuracy = BoundedFraction::new(raw.overall_accuracy)
-            .map_err(|e| HleError::ValidationError(format!("invalid accuracy value: {}", e)))?;
+            .map_err(|e| AdapterError::new("hle", format!("invalid accuracy value: {}", e)))?;
 
         let evidence = Evidence {
             source: self.id(),
@@ -145,10 +123,8 @@ mod tests {
         let invalid_json = r#"{"invalid": "schema"}"#;
         let result = adapter.parse(invalid_json);
         assert!(result.is_err());
-        match result {
-            Err(HleError::ParseError(_)) => {}
-            _ => panic!("expected ParseError"),
-        }
+        // AdapterError is now used; just verify parse failed
+        assert!(result.unwrap_err().message().contains("deserialize"));
     }
 
     #[test]
@@ -226,10 +202,8 @@ mod tests {
         let result = adapter.to_evidence(raw, &model);
 
         assert!(result.is_err());
-        match result {
-            Err(HleError::ValidationError(_)) => {}
-            _ => panic!("expected ValidationError"),
-        }
+        // AdapterError is now used; verify validation failed
+        assert!(result.unwrap_err().message().contains("invalid"));
     }
 
     #[test]
@@ -242,10 +216,8 @@ mod tests {
         let result = adapter.to_evidence(raw, &model);
 
         assert!(result.is_err());
-        match result {
-            Err(HleError::ValidationError(_)) => {}
-            _ => panic!("expected ValidationError"),
-        }
+        // AdapterError is now used; verify validation failed
+        assert!(result.unwrap_err().message().contains("invalid"));
     }
 
     #[test]
@@ -295,10 +267,9 @@ mod tests {
 
     #[test]
     fn hle_error_display() {
-        let err1 = HleError::ParseError("test error".to_string());
-        assert!(err1.to_string().contains("parse error"));
-
-        let err2 = HleError::ValidationError("invalid value".to_string());
-        assert!(err2.to_string().contains("validation error"));
+        let err = AdapterError::new("hle", "test error message");
+        let display = err.to_string();
+        assert!(display.contains("hle"));
+        assert!(display.contains("test error message"));
     }
 }
