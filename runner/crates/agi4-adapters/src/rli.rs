@@ -3,13 +3,11 @@
 //! Ingests completion rate at expert-comparable quality from the Remote Labor Index.
 //! Returns a single Fraction value representing performance on labor tasks.
 
-use crate::{ModelId, Source};
+use crate::{AdapterError, ModelId, Source};
 use agi4_core::evidence::{
     BoundedFraction, Evidence, MeasurementId, Provenance, SourceId, SourceValue,
 };
 use serde::{Deserialize, Serialize};
-use std::error::Error;
-use std::fmt;
 use url::Url;
 
 /// RLI benchmark data: completion rate at expert-comparable quality.
@@ -20,26 +18,6 @@ pub struct RliRaw {
     pub completion_rate: f64,
 }
 
-/// Error type for RLI adapter operations.
-#[derive(Debug, Clone)]
-pub enum RliError {
-    /// JSON parsing failed.
-    ParseError(String),
-    /// Value validation failed (e.g., out-of-bounds completion rate).
-    ValidationError(String),
-}
-
-impl fmt::Display for RliError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::ParseError(msg) => write!(f, "RLI parse error: {}", msg),
-            Self::ValidationError(msg) => write!(f, "RLI validation error: {}", msg),
-        }
-    }
-}
-
-impl Error for RliError {}
-
 /// RLI adapter for the completion rate measurement.
 pub struct RliAdapter {
     /// Canonical RLI endpoint (Scale AI / METR).
@@ -48,9 +26,9 @@ pub struct RliAdapter {
 
 impl RliAdapter {
     /// Create a new RLI adapter with the canonical endpoint.
-    pub fn new() -> Result<Self, RliError> {
+    pub fn new() -> Result<Self, AdapterError> {
         let endpoint = Url::parse("https://remoteindex.scale.com/api/rli")
-            .map_err(|e| RliError::ParseError(format!("invalid endpoint URL: {}", e)))?;
+            .map_err(|e| AdapterError::new("rli", format!("invalid endpoint URL: {}", e)))?;
         Ok(Self { endpoint })
     }
 
@@ -68,7 +46,7 @@ impl Default for RliAdapter {
 
 impl Source for RliAdapter {
     type Raw = RliRaw;
-    type Error = RliError;
+    type Error = AdapterError;
 
     fn id(&self) -> SourceId {
         SourceId::new("rli")
@@ -80,13 +58,13 @@ impl Source for RliAdapter {
 
     fn parse(&self, raw: &str) -> Result<Self::Raw, Self::Error> {
         serde_json::from_str::<RliRaw>(raw)
-            .map_err(|e| RliError::ParseError(format!("failed to deserialize JSON: {}", e)))
+            .map_err(|e| AdapterError::new("rli", format!("failed to deserialize JSON: {}", e)))
     }
 
     fn to_evidence(&self, raw: Self::Raw, _model: &ModelId) -> Result<Vec<Evidence>, Self::Error> {
         // Validate and construct BoundedFraction
         let completion_rate = BoundedFraction::new(raw.completion_rate).map_err(|e| {
-            RliError::ValidationError(format!("invalid completion rate value: {}", e))
+            AdapterError::new("rli", format!("invalid completion rate value: {}", e))
         })?;
 
         let evidence = Evidence {
@@ -146,10 +124,6 @@ mod tests {
         let invalid_json = r#"{"invalid": "schema"}"#;
         let result = adapter.parse(invalid_json);
         assert!(result.is_err());
-        match result {
-            Err(RliError::ParseError(_)) => {}
-            _ => panic!("expected ParseError"),
-        }
     }
 
     #[test]
@@ -227,10 +201,6 @@ mod tests {
         let result = adapter.to_evidence(raw, &model);
 
         assert!(result.is_err());
-        match result {
-            Err(RliError::ValidationError(_)) => {}
-            _ => panic!("expected ValidationError"),
-        }
     }
 
     #[test]
@@ -243,10 +213,6 @@ mod tests {
         let result = adapter.to_evidence(raw, &model);
 
         assert!(result.is_err());
-        match result {
-            Err(RliError::ValidationError(_)) => {}
-            _ => panic!("expected ValidationError"),
-        }
     }
 
     #[test]
@@ -292,14 +258,5 @@ mod tests {
             SourceValue::Fraction(frac) => assert_eq!(frac.value(), 0.72),
             _ => panic!("expected Fraction"),
         }
-    }
-
-    #[test]
-    fn rli_error_display() {
-        let err1 = RliError::ParseError("test error".to_string());
-        assert!(err1.to_string().contains("parse error"));
-
-        let err2 = RliError::ValidationError("invalid value".to_string());
-        assert!(err2.to_string().contains("validation error"));
     }
 }

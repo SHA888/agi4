@@ -3,13 +3,11 @@
 //! Ingests win+tie rate from the GDPval benchmark.
 //! Returns a single Fraction value representing performance vs industry experts.
 
-use crate::{ModelId, Source};
+use crate::{AdapterError, ModelId, Source};
 use agi4_core::evidence::{
     BoundedFraction, Evidence, MeasurementId, Provenance, SourceId, SourceValue,
 };
 use serde::{Deserialize, Serialize};
-use std::error::Error;
-use std::fmt;
 use url::Url;
 
 /// GDPval benchmark data: win+tie rate vs industry experts.
@@ -20,26 +18,6 @@ pub struct GdpvalRaw {
     pub win_tie_rate: f64,
 }
 
-/// Error type for GDPval adapter operations.
-#[derive(Debug, Clone)]
-pub enum GdpvalError {
-    /// JSON parsing failed.
-    ParseError(String),
-    /// Value validation failed (e.g., out-of-bounds win+tie rate).
-    ValidationError(String),
-}
-
-impl fmt::Display for GdpvalError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::ParseError(msg) => write!(f, "GDPval parse error: {}", msg),
-            Self::ValidationError(msg) => write!(f, "GDPval validation error: {}", msg),
-        }
-    }
-}
-
-impl Error for GdpvalError {}
-
 /// GDPval adapter for the win+tie rate measurement.
 pub struct GdpvalAdapter {
     /// Canonical GDPval (Artificial Analysis) endpoint.
@@ -48,9 +26,9 @@ pub struct GdpvalAdapter {
 
 impl GdpvalAdapter {
     /// Create a new GDPval adapter with the canonical endpoint.
-    pub fn new() -> Result<Self, GdpvalError> {
+    pub fn new() -> Result<Self, AdapterError> {
         let endpoint = Url::parse("https://artificial-analysis.com/api/gdpval")
-            .map_err(|e| GdpvalError::ParseError(format!("invalid endpoint URL: {}", e)))?;
+            .map_err(|e| AdapterError::new("gdpval", format!("invalid endpoint URL: {}", e)))?;
         Ok(Self { endpoint })
     }
 
@@ -68,7 +46,7 @@ impl Default for GdpvalAdapter {
 
 impl Source for GdpvalAdapter {
     type Raw = GdpvalRaw;
-    type Error = GdpvalError;
+    type Error = AdapterError;
 
     fn id(&self) -> SourceId {
         SourceId::new("gdpval")
@@ -80,13 +58,13 @@ impl Source for GdpvalAdapter {
 
     fn parse(&self, raw: &str) -> Result<Self::Raw, Self::Error> {
         serde_json::from_str::<GdpvalRaw>(raw)
-            .map_err(|e| GdpvalError::ParseError(format!("failed to deserialize JSON: {}", e)))
+            .map_err(|e| AdapterError::new("gdpval", format!("failed to deserialize JSON: {}", e)))
     }
 
     fn to_evidence(&self, raw: Self::Raw, _model: &ModelId) -> Result<Vec<Evidence>, Self::Error> {
         // Validate and construct BoundedFraction
         let win_tie_rate = BoundedFraction::new(raw.win_tie_rate).map_err(|e| {
-            GdpvalError::ValidationError(format!("invalid win+tie rate value: {}", e))
+            AdapterError::new("gdpval", format!("invalid win+tie rate value: {}", e))
         })?;
 
         let evidence = Evidence {
@@ -146,10 +124,6 @@ mod tests {
         let invalid_json = r#"{"invalid": "schema"}"#;
         let result = adapter.parse(invalid_json);
         assert!(result.is_err());
-        match result {
-            Err(GdpvalError::ParseError(_)) => {}
-            _ => panic!("expected ParseError"),
-        }
     }
 
     #[test]
@@ -219,10 +193,6 @@ mod tests {
         let result = adapter.to_evidence(raw, &model);
 
         assert!(result.is_err());
-        match result {
-            Err(GdpvalError::ValidationError(_)) => {}
-            _ => panic!("expected ValidationError"),
-        }
     }
 
     #[test]
@@ -233,10 +203,6 @@ mod tests {
         let result = adapter.to_evidence(raw, &model);
 
         assert!(result.is_err());
-        match result {
-            Err(GdpvalError::ValidationError(_)) => {}
-            _ => panic!("expected ValidationError"),
-        }
     }
 
     #[test]
@@ -286,14 +252,5 @@ mod tests {
             SourceValue::Fraction(frac) => assert_eq!(frac.value(), 0.87),
             _ => panic!("expected Fraction"),
         }
-    }
-
-    #[test]
-    fn gdpval_error_display() {
-        let err1 = GdpvalError::ParseError("test error".to_string());
-        assert!(err1.to_string().contains("parse error"));
-
-        let err2 = GdpvalError::ValidationError("invalid value".to_string());
-        assert!(err2.to_string().contains("validation error"));
     }
 }
