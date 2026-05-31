@@ -127,6 +127,8 @@ fn get_source_threshold(source_id: &str) -> Option<Vec<(usize, f64, Option<f64>)
 
 /// Check rule 2: variance bound.
 /// When all four conjuncts pass, min_margin >= 0.5 * max_margin.
+/// Margins are normalized per value kind: Hours-based margins and Fraction-based margins
+/// are checked separately to avoid comparing incommensurate types.
 fn check_variance_bound(
     evidence: &[Evidence],
     conjunct_statuses: &[ConjunctStatus; 4],
@@ -137,34 +139,62 @@ fn check_variance_bound(
         return Ok(());
     }
 
-    let mut margins = Vec::new();
+    let mut fraction_margins = Vec::new();
+    let mut hours_margins = Vec::new();
 
     for e in evidence {
         if let Some(thresholds) = get_source_threshold(e.source.as_str()) {
             for (_, pass_threshold, _) in thresholds {
-                let raw_value = match e.value {
-                    SourceValue::Fraction(f) => f.value(),
-                    SourceValue::Hours(h) => h.value(),
-                };
-                let margin = raw_value / pass_threshold;
-                margins.push(margin);
+                match e.value {
+                    SourceValue::Fraction(f) => {
+                        let margin = f.value() / pass_threshold;
+                        fraction_margins.push(margin);
+                    }
+                    SourceValue::Hours(h) => {
+                        let margin = h.value() / pass_threshold;
+                        hours_margins.push(margin);
+                    }
+                }
             }
         }
     }
 
-    if margins.is_empty() {
+    if fraction_margins.is_empty() && hours_margins.is_empty() {
         // No recognized sources; variance check passes trivially
         return Ok(());
     }
 
-    let min_margin = margins.iter().cloned().fold(f64::INFINITY, f64::min);
-    let max_margin = margins.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
+    // Check variance bound for fraction-based margins
+    if !fraction_margins.is_empty() {
+        let min_frac = fraction_margins
+            .iter()
+            .cloned()
+            .fold(f64::INFINITY, f64::min);
+        let max_frac = fraction_margins
+            .iter()
+            .cloned()
+            .fold(f64::NEG_INFINITY, f64::max);
+        if min_frac < threshold::consistency::MARGIN_VARIANCE_RATIO * max_frac {
+            return Err(format!(
+                "Variance bound violated in fraction sources: min_margin ({:.3}) < 0.5 * max_margin ({:.3})",
+                min_frac, max_frac
+            ));
+        }
+    }
 
-    if min_margin < threshold::consistency::MARGIN_VARIANCE_RATIO * max_margin {
-        return Err(format!(
-            "Variance bound violated: min_margin ({:.3}) < 0.5 * max_margin ({:.3})",
-            min_margin, max_margin
-        ));
+    // Check variance bound for hours-based margins
+    if !hours_margins.is_empty() {
+        let min_hours = hours_margins.iter().cloned().fold(f64::INFINITY, f64::min);
+        let max_hours = hours_margins
+            .iter()
+            .cloned()
+            .fold(f64::NEG_INFINITY, f64::max);
+        if min_hours < threshold::consistency::MARGIN_VARIANCE_RATIO * max_hours {
+            return Err(format!(
+                "Variance bound violated in hours sources: min_margin ({:.3}) < 0.5 * max_margin ({:.3})",
+                min_hours, max_hours
+            ));
+        }
     }
 
     Ok(())
@@ -346,23 +376,25 @@ mod tests {
     }
 
     #[test]
-    fn rule2_variance_bound_fails_with_extreme_imbalance() {
+    fn rule2_variance_bound_fails_with_imbalance_within_type() {
         let statuses = [
             ConjunctStatus::Pass,
             ConjunctStatus::Pass,
             ConjunctStatus::Pass,
             ConjunctStatus::Pass,
         ];
-        // Extreme imbalance using fraction and hour mixing to create very different margins
-        // One source has tiny margin, another has huge margin
+
+        // To fail variance bound, we need min < 0.5*max within a type group.
+        // Fraction sources: 0.40, 0.85, 0.90, 0.60
+        // Margins: 0.40/0.85 ≈ 0.470, 0.85/0.85 = 1.0, 0.90/0.85 ≈ 1.059, 0.60/0.60 = 1.0
+        // min ≈ 0.470, max ≈ 1.059
+        // Need: 0.470 >= 0.5*1.059 ≈ 0.530? NO! This should fail
         let evidence = vec![
-            make_evidence("arc-agi-2", 0.851, true), // margin: 0.851/0.85 ≈ 1.001
-            make_evidence("gdpval", 0.851, true),    // margin: 0.851/0.85 ≈ 1.001
-            make_evidence("osworld", 0.851, true),   // margin: 0.851/0.85 ≈ 1.001
-            make_evidence("metr-80pct-time-horizon", 8000.0, false), // margin: 8000/168 ≈ 47.6
+            make_evidence("arc-agi-2", 0.40, true), // margin: 0.40/0.85 ≈ 0.470
+            make_evidence("gdpval", 0.85, true),    // margin: 0.85/0.85 = 1.0
+            make_evidence("osworld", 0.90, true),   // margin: 0.90/0.85 ≈ 1.059
+            make_evidence("re-bench", 0.60, true),  // margin: 0.60/0.60 = 1.0
         ];
-        // min_margin ≈ 1.001, max_margin ≈ 47.6
-        // Need: min >= 0.5*max => 1.001 >= 23.8? No! This should fail
         assert!(check_variance_bound(&evidence, &statuses).is_err());
     }
 
@@ -444,7 +476,10 @@ mod tests {
     }
 
     #[test]
-    fn consistency_check_rule2_fails() {
+    fn consistency_check_rule2_passes_after_type_normalization() {
+        // Regression test: mixed Hours/Fractions no longer fail variance bound
+        // (they are now checked within their own type groups).
+        // This evidence would have failed the old variance check.
         let statuses = [
             ConjunctStatus::Pass,
             ConjunctStatus::Pass,
@@ -452,22 +487,26 @@ mod tests {
             ConjunctStatus::Pass,
         ];
         let evidence = vec![
-            make_evidence("arc-agi-2", 0.99, true),
-            make_evidence("gdpval", 0.851, true),
-            make_evidence("osworld", 0.90, true),
-            make_evidence("metr-80pct-time-horizon", 8000.0, false),
+            make_evidence("arc-agi-2", 0.99, true), // margin: 0.99/0.85 ≈ 1.164
+            make_evidence("gdpval", 0.851, true),   // margin: 0.851/0.85 ≈ 1.001
+            make_evidence("osworld", 0.90, true),   // margin: 0.90/0.85 ≈ 1.059
+            make_evidence("metr-80pct-time-horizon", 8000.0, false), // margin: 8000/168 ≈ 47.6
         ];
+        // Fraction margins: [1.164, 1.001, 1.059]
+        // Hours margins: [47.6] (single value, trivially passes)
+        // Fraction variance: min=1.001, max=1.164
+        // Check: 1.001 >= 0.5*1.164 = 0.582? YES, passes!
         let result = consistency_check(&evidence, &statuses);
-        assert!(!result.passed);
         assert!(
-            result
-                .failed_rules
-                .contains(&"rule_2_variance_bound".to_string())
+            result.passed,
+            "Mixed Hours/Fractions should pass if balanced within their type groups"
         );
     }
 
     #[test]
-    fn consistency_check_multiple_rules_fail() {
+    fn consistency_check_rule2_fails_when_fractions_imbalanced() {
+        // Variance bound should fail when fraction sources are imbalanced,
+        // even if hours sources are separately balanced.
         let statuses = [
             ConjunctStatus::Pass,
             ConjunctStatus::Pass,
@@ -475,14 +514,17 @@ mod tests {
             ConjunctStatus::Pass,
         ];
         let evidence = vec![
-            make_evidence("arc-agi-2", 0.99, true),
-            make_evidence("gdpval", 0.851, true),
-            make_evidence("osworld", 0.90, true),
-            make_evidence("metr-80pct-time-horizon", 8000.0, false),
+            make_evidence("arc-agi-2", 0.40, true), // margin: 0.40/0.85 ≈ 0.470
+            make_evidence("gdpval", 0.851, true),   // margin: 0.851/0.85 ≈ 1.001
+            make_evidence("osworld", 0.90, true),   // margin: 0.90/0.85 ≈ 1.059
+            make_evidence("metr-80pct-time-horizon", 200.0, false), // margin: 200/168 ≈ 1.19
         ];
+        // Fraction margins: [0.470, 1.001, 1.059]
+        // Hours margins: [1.19]
+        // Fraction check: min=0.470, max=1.059
+        // Need: 0.470 >= 0.5*1.059 ≈ 0.530? NO, fails!
         let result = consistency_check(&evidence, &statuses);
         assert!(!result.passed);
-        // Rule 2 (variance bound) should fail due to extreme imbalance
         assert!(
             result
                 .failed_rules
@@ -508,5 +550,32 @@ mod tests {
         // Only rule3 would fail if provenance is broken, but we have good provenance
         // Rule1 doesn't apply (not all pass), rule2 doesn't apply (not all pass)
         assert!(result.passed);
+    }
+
+    #[test]
+    fn variance_bound_strong_long_horizon_model_regression() {
+        // Regression test: verify that a strong long-horizon model (METR 400h)
+        // doesn't spuriously fail variance bound when combined with properly passing
+        // fraction sources. Prior to the fix, this would fail because Hours margins
+        // (400/168 = 2.38) and Fraction margins (0.85/0.80 = 1.06) were compared
+        // directly, and min(1.06) < 0.5 * max(2.38).
+        let statuses = [
+            ConjunctStatus::Pass,
+            ConjunctStatus::Pass,
+            ConjunctStatus::Pass,
+            ConjunctStatus::Pass,
+        ];
+        let evidence = vec![
+            make_evidence("arc-agi-2", 0.88, true), // margin: 0.88/0.85 ≈ 1.04
+            make_evidence("gdpval", 0.87, true),    // margin: 0.87/0.85 ≈ 1.02
+            make_evidence("osworld", 0.86, true),   // margin: 0.86/0.85 ≈ 1.01
+            make_evidence("metr-80pct-time-horizon", 400.0, false), // margin: 400/168 ≈ 2.38
+        ];
+        let result = consistency_check(&evidence, &statuses);
+        assert!(
+            result.passed,
+            "Strong long-horizon model should pass variance bound (variance check applied per type)"
+        );
+        assert!(result.failed_rules.is_empty());
     }
 }
