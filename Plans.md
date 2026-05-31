@@ -84,7 +84,7 @@ below. Severity: **C**ritical / **H**igh / **M**edium / **L**ow.
 | 2.22 | M | `lib.rs:299` `CachingFetcher` doc claims concurrent dedup via file locking, but `fetch` is read → http → `fs::write` (TOCTOU + write race, possible torn cache served as valid) | Implement real dedup/locking + atomic write (temp file + rename), or correct the doc; add a concurrency test | 2.11 | cc:done [9b0de0c] |
 | 2.23 | M | Adapter raw structs lack `#[serde(deny_unknown_fields)]`, violating Parse-Don't-Validate (principle #2); schema drift / renamed fields are silently accepted | Add `deny_unknown_fields` to all adapter raw structs; add a test asserting unknown fields fail parse | 2.1-2.9 | cc:done [5f1c8ac] |
 | 2.24 | L | `live.rs:163` METR source id `"metr-time-horizon"` is non-canonical (vs `"metr-80pct-time-horizon"`) | Use the canonical constant (subsumed by 2.14) | 2.14 | cc:TODO |
-| 2.25 | L | `evaluators.rs:233` environmental_transfer `Fail` arm is dead code — the floor is already enforced at line 209, so the Partial guard `>= FLOOR` is always true | Remove the unreachable arm, or restructure so Fail is reachable per SPEC §2.3 intent | 2.0b | cc:TODO |
+| 2.25 | L | `evaluators.rs:233` environmental_transfer `Fail` arm is dead code — the floor is already enforced at line 209, so the Partial guard `>= FLOOR` is always true | Remove the unreachable arm, or restructure so Fail is reachable per SPEC §2.3 intent | 2.0b | cc:done [8fb09c7] |
 | 2.26 | L | Seven single-value adapters are ~300-line near-duplicates with per-adapter error enums + test modules (~4000 LOC copy-paste); crate-level `AdapterError` is unused | Extract a generic `FractionSource` helper + parameterized tests; consume shared `AdapterError` | 2.1-2.9 | cc:TODO |
 
 ---
