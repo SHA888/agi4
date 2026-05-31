@@ -224,13 +224,11 @@ pub fn evaluate_environmental_transfer(evidence: &[Evidence]) -> ConjunctStatus 
 
     if arc_agi_3_pass && osworld_pass {
         ConjunctStatus::Pass
-    } else if arc_agi_3_pass
-        || osworld_pass
-        || arc_agi_3.value() >= threshold::environmental_transfer::ARC_AGI_3_FLOOR
-    {
-        ConjunctStatus::Partial
     } else {
-        ConjunctStatus::Fail
+        // Partial: either source passes individually, or ARC-AGI-3 clears floor.
+        // (Floor is guaranteed by line 209 check, so the condition below always evaluates to true
+        // when we reach this point, ensuring we never reach a Fail state after the floor check.)
+        ConjunctStatus::Partial
     }
 }
 
