@@ -3,13 +3,11 @@
 //! Ingests AI research engineering task success rate from the RE-Bench benchmark.
 //! Returns a single Fraction value representing task success performance.
 
-use crate::{ModelId, Source};
+use crate::{AdapterError, ModelId, Source};
 use agi4_core::evidence::{
     BoundedFraction, Evidence, MeasurementId, Provenance, SourceId, SourceValue,
 };
 use serde::{Deserialize, Serialize};
-use std::error::Error;
-use std::fmt;
 use url::Url;
 
 /// RE-Bench benchmark data: AI research engineering task success rate.
@@ -20,26 +18,6 @@ pub struct ReBenchRaw {
     pub task_success_rate: f64,
 }
 
-/// Error type for RE-Bench adapter operations.
-#[derive(Debug, Clone)]
-pub enum ReBenchError {
-    /// JSON parsing failed.
-    ParseError(String),
-    /// Value validation failed (e.g., out-of-bounds task success rate).
-    ValidationError(String),
-}
-
-impl fmt::Display for ReBenchError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::ParseError(msg) => write!(f, "RE-Bench parse error: {}", msg),
-            Self::ValidationError(msg) => write!(f, "RE-Bench validation error: {}", msg),
-        }
-    }
-}
-
-impl Error for ReBenchError {}
-
 /// RE-Bench adapter for the task success rate measurement.
 pub struct ReBenchAdapter {
     /// Canonical RE-Bench endpoint (METR).
@@ -48,9 +26,9 @@ pub struct ReBenchAdapter {
 
 impl ReBenchAdapter {
     /// Create a new RE-Bench adapter with the canonical endpoint.
-    pub fn new() -> Result<Self, ReBenchError> {
+    pub fn new() -> Result<Self, AdapterError> {
         let endpoint = Url::parse("https://re-bench.metr.org/api/results")
-            .map_err(|e| ReBenchError::ParseError(format!("invalid endpoint URL: {}", e)))?;
+            .map_err(|e| AdapterError::new("re-bench", format!("invalid endpoint URL: {}", e)))?;
         Ok(Self { endpoint })
     }
 
@@ -68,7 +46,7 @@ impl Default for ReBenchAdapter {
 
 impl Source for ReBenchAdapter {
     type Raw = ReBenchRaw;
-    type Error = ReBenchError;
+    type Error = AdapterError;
 
     fn id(&self) -> SourceId {
         SourceId::new("re-bench")
@@ -79,14 +57,18 @@ impl Source for ReBenchAdapter {
     }
 
     fn parse(&self, raw: &str) -> Result<Self::Raw, Self::Error> {
-        serde_json::from_str::<ReBenchRaw>(raw)
-            .map_err(|e| ReBenchError::ParseError(format!("failed to deserialize JSON: {}", e)))
+        serde_json::from_str::<ReBenchRaw>(raw).map_err(|e| {
+            AdapterError::new("re-bench", format!("failed to deserialize JSON: {}", e))
+        })
     }
 
     fn to_evidence(&self, raw: Self::Raw, _model: &ModelId) -> Result<Vec<Evidence>, Self::Error> {
         // Validate and construct BoundedFraction
         let task_success_rate = BoundedFraction::new(raw.task_success_rate).map_err(|e| {
-            ReBenchError::ValidationError(format!("invalid task success rate value: {}", e))
+            AdapterError::new(
+                "re-bench",
+                format!("invalid task success rate value: {}", e),
+            )
         })?;
 
         let evidence = Evidence {
@@ -146,10 +128,6 @@ mod tests {
         let invalid_json = r#"{"invalid": "schema"}"#;
         let result = adapter.parse(invalid_json);
         assert!(result.is_err());
-        match result {
-            Err(ReBenchError::ParseError(_)) => {}
-            _ => panic!("expected ParseError"),
-        }
     }
 
     #[test]
@@ -231,10 +209,6 @@ mod tests {
         let result = adapter.to_evidence(raw, &model);
 
         assert!(result.is_err());
-        match result {
-            Err(ReBenchError::ValidationError(_)) => {}
-            _ => panic!("expected ValidationError"),
-        }
     }
 
     #[test]
@@ -247,10 +221,6 @@ mod tests {
         let result = adapter.to_evidence(raw, &model);
 
         assert!(result.is_err());
-        match result {
-            Err(ReBenchError::ValidationError(_)) => {}
-            _ => panic!("expected ValidationError"),
-        }
     }
 
     #[test]
@@ -296,14 +266,5 @@ mod tests {
             SourceValue::Fraction(frac) => assert_eq!(frac.value(), 0.68),
             _ => panic!("expected Fraction"),
         }
-    }
-
-    #[test]
-    fn re_bench_error_display() {
-        let err1 = ReBenchError::ParseError("test error".to_string());
-        assert!(err1.to_string().contains("parse error"));
-
-        let err2 = ReBenchError::ValidationError("invalid value".to_string());
-        assert!(err2.to_string().contains("validation error"));
     }
 }

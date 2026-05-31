@@ -3,13 +3,11 @@
 //! Ingests task completion rate from the APEX-Agents benchmark.
 //! Returns a single Fraction value representing task completion performance.
 
-use crate::{ModelId, Source};
+use crate::{AdapterError, ModelId, Source};
 use agi4_core::evidence::{
     BoundedFraction, Evidence, MeasurementId, Provenance, SourceId, SourceValue,
 };
 use serde::{Deserialize, Serialize};
-use std::error::Error;
-use std::fmt;
 use url::Url;
 
 /// APEX-Agents benchmark data: task completion rate.
@@ -20,26 +18,6 @@ pub struct ApexAgentsRaw {
     pub task_completion_rate: f64,
 }
 
-/// Error type for APEX-Agents adapter operations.
-#[derive(Debug, Clone)]
-pub enum ApexAgentsError {
-    /// JSON parsing failed.
-    ParseError(String),
-    /// Value validation failed (e.g., out-of-bounds task completion rate).
-    ValidationError(String),
-}
-
-impl fmt::Display for ApexAgentsError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::ParseError(msg) => write!(f, "APEX-Agents parse error: {}", msg),
-            Self::ValidationError(msg) => write!(f, "APEX-Agents validation error: {}", msg),
-        }
-    }
-}
-
-impl Error for ApexAgentsError {}
-
 /// APEX-Agents adapter for the task completion rate measurement.
 pub struct ApexAgentsAdapter {
     /// Canonical APEX-Agents endpoint.
@@ -48,9 +26,10 @@ pub struct ApexAgentsAdapter {
 
 impl ApexAgentsAdapter {
     /// Create a new APEX-Agents adapter with the canonical endpoint.
-    pub fn new() -> Result<Self, ApexAgentsError> {
-        let endpoint = Url::parse("https://apexagents.ai/api/results")
-            .map_err(|e| ApexAgentsError::ParseError(format!("invalid endpoint URL: {}", e)))?;
+    pub fn new() -> Result<Self, AdapterError> {
+        let endpoint = Url::parse("https://apexagents.ai/api/results").map_err(|e| {
+            AdapterError::new("apex-agents", format!("invalid endpoint URL: {}", e))
+        })?;
         Ok(Self { endpoint })
     }
 
@@ -68,7 +47,7 @@ impl Default for ApexAgentsAdapter {
 
 impl Source for ApexAgentsAdapter {
     type Raw = ApexAgentsRaw;
-    type Error = ApexAgentsError;
+    type Error = AdapterError;
 
     fn id(&self) -> SourceId {
         SourceId::new("apex-agents")
@@ -79,14 +58,18 @@ impl Source for ApexAgentsAdapter {
     }
 
     fn parse(&self, raw: &str) -> Result<Self::Raw, Self::Error> {
-        serde_json::from_str::<ApexAgentsRaw>(raw)
-            .map_err(|e| ApexAgentsError::ParseError(format!("failed to deserialize JSON: {}", e)))
+        serde_json::from_str::<ApexAgentsRaw>(raw).map_err(|e| {
+            AdapterError::new("apex-agents", format!("failed to deserialize JSON: {}", e))
+        })
     }
 
     fn to_evidence(&self, raw: Self::Raw, _model: &ModelId) -> Result<Vec<Evidence>, Self::Error> {
         // Validate and construct BoundedFraction
         let task_completion_rate = BoundedFraction::new(raw.task_completion_rate).map_err(|e| {
-            ApexAgentsError::ValidationError(format!("invalid task completion rate value: {}", e))
+            AdapterError::new(
+                "apex-agents",
+                format!("invalid task completion rate value: {}", e),
+            )
         })?;
 
         let evidence = Evidence {
@@ -146,10 +129,6 @@ mod tests {
         let invalid_json = r#"{"invalid": "schema"}"#;
         let result = adapter.parse(invalid_json);
         assert!(result.is_err());
-        match result {
-            Err(ApexAgentsError::ParseError(_)) => {}
-            _ => panic!("expected ParseError"),
-        }
     }
 
     #[test]
@@ -231,10 +210,6 @@ mod tests {
         let result = adapter.to_evidence(raw, &model);
 
         assert!(result.is_err());
-        match result {
-            Err(ApexAgentsError::ValidationError(_)) => {}
-            _ => panic!("expected ValidationError"),
-        }
     }
 
     #[test]
@@ -247,10 +222,6 @@ mod tests {
         let result = adapter.to_evidence(raw, &model);
 
         assert!(result.is_err());
-        match result {
-            Err(ApexAgentsError::ValidationError(_)) => {}
-            _ => panic!("expected ValidationError"),
-        }
     }
 
     #[test]
@@ -302,14 +273,5 @@ mod tests {
             SourceValue::Fraction(frac) => assert_eq!(frac.value(), 0.78),
             _ => panic!("expected Fraction"),
         }
-    }
-
-    #[test]
-    fn apex_agents_error_display() {
-        let err1 = ApexAgentsError::ParseError("test error".to_string());
-        assert!(err1.to_string().contains("parse error"));
-
-        let err2 = ApexAgentsError::ValidationError("invalid value".to_string());
-        assert!(err2.to_string().contains("validation error"));
     }
 }

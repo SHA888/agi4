@@ -3,13 +3,11 @@
 //! Ingests accuracy from the GPQA Diamond benchmark.
 //! Returns a single Fraction value representing performance on the evaluation suite.
 
-use crate::{ModelId, Source};
+use crate::{AdapterError, ModelId, Source};
 use agi4_core::evidence::{
     BoundedFraction, Evidence, MeasurementId, Provenance, SourceId, SourceValue,
 };
 use serde::{Deserialize, Serialize};
-use std::error::Error;
-use std::fmt;
 use url::Url;
 
 /// GPQA Diamond benchmark data: accuracy on the evaluation suite.
@@ -20,26 +18,6 @@ pub struct GpqaDiamondRaw {
     pub accuracy: f64,
 }
 
-/// Error type for GPQA Diamond adapter operations.
-#[derive(Debug, Clone)]
-pub enum GpqaDiamondError {
-    /// JSON parsing failed.
-    ParseError(String),
-    /// Value validation failed (e.g., out-of-bounds accuracy).
-    ValidationError(String),
-}
-
-impl fmt::Display for GpqaDiamondError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::ParseError(msg) => write!(f, "GPQA Diamond parse error: {}", msg),
-            Self::ValidationError(msg) => write!(f, "GPQA Diamond validation error: {}", msg),
-        }
-    }
-}
-
-impl Error for GpqaDiamondError {}
-
 /// GPQA Diamond adapter for the accuracy measurement.
 pub struct GpqaDiamondAdapter {
     /// Canonical GPQA Diamond endpoint.
@@ -48,9 +26,11 @@ pub struct GpqaDiamondAdapter {
 
 impl GpqaDiamondAdapter {
     /// Create a new GPQA Diamond adapter with the canonical endpoint.
-    pub fn new() -> Result<Self, GpqaDiamondError> {
-        let endpoint = Url::parse("https://api.gpqabenchmark.com/diamond/results")
-            .map_err(|e| GpqaDiamondError::ParseError(format!("invalid endpoint URL: {}", e)))?;
+    pub fn new() -> Result<Self, AdapterError> {
+        let endpoint =
+            Url::parse("https://api.gpqabenchmark.com/diamond/results").map_err(|e| {
+                AdapterError::new("gpqa-diamond", format!("invalid endpoint URL: {}", e))
+            })?;
         Ok(Self { endpoint })
     }
 
@@ -68,7 +48,7 @@ impl Default for GpqaDiamondAdapter {
 
 impl Source for GpqaDiamondAdapter {
     type Raw = GpqaDiamondRaw;
-    type Error = GpqaDiamondError;
+    type Error = AdapterError;
 
     fn id(&self) -> SourceId {
         SourceId::new("gpqa-diamond")
@@ -79,14 +59,15 @@ impl Source for GpqaDiamondAdapter {
     }
 
     fn parse(&self, raw: &str) -> Result<Self::Raw, Self::Error> {
-        serde_json::from_str::<GpqaDiamondRaw>(raw)
-            .map_err(|e| GpqaDiamondError::ParseError(format!("failed to deserialize JSON: {}", e)))
+        serde_json::from_str::<GpqaDiamondRaw>(raw).map_err(|e| {
+            AdapterError::new("gpqa-diamond", format!("failed to deserialize JSON: {}", e))
+        })
     }
 
     fn to_evidence(&self, raw: Self::Raw, _model: &ModelId) -> Result<Vec<Evidence>, Self::Error> {
         // Validate and construct BoundedFraction
         let accuracy = BoundedFraction::new(raw.accuracy).map_err(|e| {
-            GpqaDiamondError::ValidationError(format!("invalid accuracy value: {}", e))
+            AdapterError::new("gpqa-diamond", format!("invalid accuracy value: {}", e))
         })?;
 
         let evidence = Evidence {
@@ -146,10 +127,6 @@ mod tests {
         let invalid_json = r#"{"invalid": "schema"}"#;
         let result = adapter.parse(invalid_json);
         assert!(result.is_err());
-        match result {
-            Err(GpqaDiamondError::ParseError(_)) => {}
-            _ => panic!("expected ParseError"),
-        }
     }
 
     #[test]
@@ -223,10 +200,6 @@ mod tests {
         let result = adapter.to_evidence(raw, &model);
 
         assert!(result.is_err());
-        match result {
-            Err(GpqaDiamondError::ValidationError(_)) => {}
-            _ => panic!("expected ValidationError"),
-        }
     }
 
     #[test]
@@ -237,10 +210,6 @@ mod tests {
         let result = adapter.to_evidence(raw, &model);
 
         assert!(result.is_err());
-        match result {
-            Err(GpqaDiamondError::ValidationError(_)) => {}
-            _ => panic!("expected ValidationError"),
-        }
     }
 
     #[test]
@@ -284,14 +253,5 @@ mod tests {
             SourceValue::Fraction(h) => assert_eq!(h.value(), 0.91),
             _ => panic!("expected Fraction"),
         }
-    }
-
-    #[test]
-    fn gpqa_diamond_error_display() {
-        let err1 = GpqaDiamondError::ParseError("test error".to_string());
-        assert!(err1.to_string().contains("parse error"));
-
-        let err2 = GpqaDiamondError::ValidationError("invalid value".to_string());
-        assert!(err2.to_string().contains("validation error"));
     }
 }
