@@ -70,7 +70,17 @@ pub fn load_evidence_from_fixtures(
             None => continue,
         };
 
-        let json_content = fs::read_to_string(&json_file)?;
+        let json_content = match fs::read_to_string(&json_file) {
+            Ok(content) => content,
+            Err(e) => {
+                eprintln!(
+                    "warning: failed to read JSON file {}: {}",
+                    json_file.display(),
+                    e
+                );
+                continue;
+            }
+        };
 
         // Load evidence from the appropriate adapter
         let source_evidence = match source_name.as_str() {

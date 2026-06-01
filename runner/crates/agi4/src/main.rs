@@ -111,9 +111,10 @@ fn attest_from_fixture(
         evaluate_autonomous_agency, evaluate_economic_substitutability,
         evaluate_environmental_transfer, evaluate_generality,
     };
+    use agi4_core::sources;
     use agi4_schema::{
         ConjunctReport, ConjunctsOutput, ConsistencyCheckOutput, EvidenceReport, ModelMetadata,
-        VerdictOutput,
+        ProvenanceReport, VerdictOutput,
     };
     use chrono::Utc;
 
@@ -148,12 +149,54 @@ fn attest_from_fixture(
         format!("{:?}", status).to_lowercase()
     }
 
-    // For fixture path, report evidence count per conjunct without detailed evidence reports
-    // (detailed evidence reporting requires threshold/floor lookup which is out of scope for task 2.15)
-    let generality_evidence: Vec<EvidenceReport> = vec![];
-    let econ_evidence: Vec<EvidenceReport> = vec![];
-    let env_evidence: Vec<EvidenceReport> = vec![];
-    let agency_evidence: Vec<EvidenceReport> = vec![];
+    // Helper to convert core Evidence to schema EvidenceReport
+    fn evidence_to_report(e: &agi4::core::Evidence) -> EvidenceReport {
+        use agi4::core::SourceValue;
+        EvidenceReport {
+            source: e.source.as_str().to_string(),
+            measurement: e.measurement.as_str().to_string(),
+            value: match e.value {
+                SourceValue::Fraction(f) => serde_json::json!(f.value()),
+                SourceValue::Hours(h) => serde_json::json!(h.value()),
+            },
+            threshold: None,
+            floor: None,
+            passes_threshold: None,
+            below_floor: None,
+            reliability_percentile: e.reliability_percentile,
+            provenance: ProvenanceReport {
+                source_url: e.provenance.source_url.as_str().to_string(),
+                fetch_timestamp: e
+                    .provenance
+                    .fetch_timestamp
+                    .to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
+                source_version: e.provenance.source_version.clone(),
+                raw_value: e.provenance.raw_value.clone(),
+            },
+        }
+    }
+
+    // Populate evidence per conjunct by filtering by source
+    let generality_evidence: Vec<EvidenceReport> = all_evidence
+        .iter()
+        .filter(|e| sources::generality::all().contains(&e.source.as_str()))
+        .map(evidence_to_report)
+        .collect();
+    let econ_evidence: Vec<EvidenceReport> = all_evidence
+        .iter()
+        .filter(|e| sources::economic_substitutability::all().contains(&e.source.as_str()))
+        .map(evidence_to_report)
+        .collect();
+    let env_evidence: Vec<EvidenceReport> = all_evidence
+        .iter()
+        .filter(|e| sources::environmental_transfer::all().contains(&e.source.as_str()))
+        .map(evidence_to_report)
+        .collect();
+    let agency_evidence: Vec<EvidenceReport> = all_evidence
+        .iter()
+        .filter(|e| sources::autonomous_agency::all().contains(&e.source.as_str()))
+        .map(evidence_to_report)
+        .collect();
 
     let verdict_reasons = vec![
         format!("Generality: {}", status_to_string(generality_status)),

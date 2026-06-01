@@ -43,18 +43,48 @@ impl ModelId {
     }
 }
 
+/// Error kind for source adaptation operations.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AdapterErrorKind {
+    /// Error occurred during JSON parsing or schema deserialization.
+    Parse,
+    /// Error occurred during validation of parsed data.
+    Validation,
+}
+
 /// Error type for source adaptation operations.
 #[derive(Debug, Clone)]
 pub struct AdapterError {
     source_id: String,
+    kind: AdapterErrorKind,
     message: String,
 }
 
 impl AdapterError {
     /// Create a new adapter error.
     pub fn new(source_id: impl Into<String>, message: impl Into<String>) -> Self {
+        Self::with_kind(source_id, AdapterErrorKind::Validation, message)
+    }
+
+    /// Create an adapter parse error.
+    pub fn parse(source_id: impl Into<String>, message: impl Into<String>) -> Self {
+        Self::with_kind(source_id, AdapterErrorKind::Parse, message)
+    }
+
+    /// Create an adapter validation error.
+    pub fn validation(source_id: impl Into<String>, message: impl Into<String>) -> Self {
+        Self::with_kind(source_id, AdapterErrorKind::Validation, message)
+    }
+
+    /// Create an adapter error with explicit kind.
+    pub fn with_kind(
+        source_id: impl Into<String>,
+        kind: AdapterErrorKind,
+        message: impl Into<String>,
+    ) -> Self {
         Self {
             source_id: source_id.into(),
+            kind,
             message: message.into(),
         }
     }
@@ -62,6 +92,11 @@ impl AdapterError {
     /// Get the error message.
     pub fn message(&self) -> &str {
         &self.message
+    }
+
+    /// Get the error kind.
+    pub fn kind(&self) -> AdapterErrorKind {
+        self.kind
     }
 }
 
@@ -381,11 +416,13 @@ impl CachingFetcher {
         // Write to a temporary file in the same directory
         let temp_path = {
             let mut temp = cache_path.to_path_buf();
-            let filename = temp
-                .file_name()
-                .map(|n| n.to_string_lossy())
-                .unwrap_or_default()
-                .to_string();
+            let filename = match temp.file_name() {
+                Some(name) => name.to_string_lossy().to_string(),
+                None => {
+                    // If no filename component (e.g., path is ".."), skip cache write
+                    return;
+                }
+            };
             temp.pop();
             temp.push(format!(".{}.tmp", filename));
             temp
@@ -410,12 +447,6 @@ impl CachingFetcher {
             .entry(url_hash)
             .or_insert_with(|| Arc::new(Mutex::new(())))
             .clone()
-    }
-}
-
-impl Default for CachingFetcher {
-    fn default() -> Self {
-        Self::new().expect("failed to create default caching fetcher")
     }
 }
 
@@ -662,14 +693,14 @@ mod tests {
 
     #[test]
     fn caching_fetcher_default() {
-        let fetcher = CachingFetcher::default();
+        let fetcher = CachingFetcher::new().expect("create fetcher");
         assert!(fetcher.cache_dir.ends_with("agi4"));
         assert_eq!(fetcher.cache_ttl_secs, 86400);
     }
 
     #[test]
     fn caching_fetcher_cache_path() {
-        let fetcher = CachingFetcher::default();
+        let fetcher = CachingFetcher::new().expect("create fetcher");
         let url1 = Url::parse("http://example.com/data").unwrap();
         let url2 = Url::parse("http://example.com/data").unwrap();
         let url3 = Url::parse("http://other.com/data").unwrap();
@@ -686,14 +717,14 @@ mod tests {
 
     #[test]
     fn caching_fetcher_is_cache_valid_missing() {
-        let fetcher = CachingFetcher::default();
+        let fetcher = CachingFetcher::new().expect("create fetcher");
         let nonexistent = fetcher.cache_dir.join("nonexistent-cache-entry");
         assert!(!fetcher.is_cache_valid(&nonexistent));
     }
 
     #[test]
     fn caching_fetcher_is_cache_valid_expired() {
-        let fetcher = CachingFetcher::default();
+        let fetcher = CachingFetcher::new().expect("create fetcher");
         let temp_cache = fetcher.cache_dir.join("temp-cache-entry");
 
         // Create a cache file
@@ -712,7 +743,7 @@ mod tests {
 
     #[test]
     fn caching_fetcher_read_write_cache() {
-        let fetcher = CachingFetcher::default();
+        let fetcher = CachingFetcher::new().expect("create fetcher");
         let test_cache = fetcher.cache_dir.join("test-read-write");
 
         let test_data = "test cached content";
@@ -727,7 +758,7 @@ mod tests {
 
     #[test]
     fn caching_fetcher_read_cache_invalid() {
-        let fetcher = CachingFetcher::default();
+        let fetcher = CachingFetcher::new().expect("create fetcher");
         let expired_cache = fetcher.cache_dir.join("expired-cache");
 
         // Create and manually expire the cache file
