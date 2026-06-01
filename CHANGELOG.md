@@ -4,6 +4,8 @@ All notable changes to the agi4 project are documented in this file.
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-02
+
 ### Fixed
 
 #### Core (agi4-core)
