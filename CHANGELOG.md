@@ -2,6 +2,27 @@
 
 All notable changes to the agi4 project are documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+#### Core (agi4-core)
+- Variance bounds check now correctly implements SPEC.md §4 rule 2: compares all sources in a single pool (Fraction + Hours together) rather than splitting by type, preventing spurious failures on strong long-horizon models
+
+#### Adapters (agi4-adapters)
+- Removed panic-prone `Default` impl from `CachingFetcher` that called `.expect()` in non-test code; replaced with explicit `CachingFetcher::new()` calls in tests
+- Fixed error handling in `write_cache`: replaced `unwrap_or_default()` with explicit early return when cache path has no filename component
+- Added `AdapterErrorKind` enum to distinguish Parse vs Validation errors, enabling better test coverage and error discrimination without string matching
+  - New constructors: `AdapterError::parse()`, `AdapterError::validation()`, `AdapterError::with_kind()`
+  - `kind()` method to query error category
+
+#### Facade (agi4)
+- Fixed `attest_from_fixture`: evidence vectors in VerdictOutput were always empty; now correctly populates conjunct evidence by filtering source associations and converting core Evidence to schema EvidenceReport types
+- Fixed `load_evidence_from_fixtures`: JSON read errors now use `continue` instead of `?` operator, consistent with other error paths and allowing attestation to proceed with valid sources even if one fixture file is unreadable
+
+#### Testing
+- Updated variance bound regression tests to reflect single-pool semantics per SPEC.md §4 rule 2
+
 ## [0.1.0] - 2026-05-26
 
 ### Added
