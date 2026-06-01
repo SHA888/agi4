@@ -94,3 +94,9 @@ All notable changes to the agi4 project are documented in this file.
 - **Phase 3 (v0.1.2)**: Calibration based on first attestation (todo)
 - **Phase 4 (v0.1.3)**: Gap closure - NES specification (todo)
 - **Phase 5 (v0.2.0)**: First stable threshold set (todo)
+
+---
+
+[Unreleased]: https://github.com/SHA888/agi4/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/SHA888/agi4/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/SHA888/agi4/releases/tag/v0.1.0
