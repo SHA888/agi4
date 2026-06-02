@@ -3,7 +3,8 @@
 Project task tracking for AGI/4 attestation protocol reference runner.
 
 **Created:** 2026-05-26
-**Current Phase:** v0.1.0 (Scaffold and first verdict)
+**Current Phase:** v0.1.1 (Real adapters, code review fixes, published to crates.io)
+**Latest:** 2026-06-02 — Phase 2 complete, all crates published at v0.1.1
 
 ---
 
@@ -36,6 +37,14 @@ Project task tracking for AGI/4 attestation protocol reference runner.
 ---
 
 ## Phase 2: v0.1.1 — Real Adapters, First Live Attestation
+
+**Status: ✅ COMPLETE** (2026-06-02)
+- All 9 adapters implemented and tested (2.1–2.9)
+- Live attestation pipeline wired with caching (2.10–2.11)
+- First verdict generated for Claude 3.5 Sonnet (2.12)
+- All 15 code review findings remediated (2.14–2.26)
+- All crates published to crates.io at v0.1.1
+- Tests: 265 passing (116 → 265, +228%)
 
 **Goal:** Implement all nine upstream source adapters, run first live attestation, commit verdicts.
 
@@ -160,6 +169,29 @@ below. Severity: **C**ritical / **H**igh / **M**edium / **L**ow.
 | X.1 | Document per-conjunct rationale (why these sources triangulate) | One-page rationale per conjunct in `docs/conjuncts/` | - | cc:TODO |
 | X.2 | Document how to read a verdict (for non-implementers) | `docs/reading-verdicts.md` complete and clear | - | cc:TODO |
 | X.3 | Outreach to ARC Prize, METR, Epoch AI (after v0.1.1 works) | Issue or email sent only after live attestation proven | - | cc:TODO |
+
+---
+
+## Completion Summary: Phase 2 (v0.1.1)
+
+**Release Date:** 2026-06-02
+**Commits:** 41 commits since v0.1.0 (26 May → 2 June)
+**Test Growth:** 116 → 265 tests (+228%)
+**Lines Changed:** ~2000 (9 adapters, 15 bug fixes, refactoring)
+
+### Deliverables
+- ✅ 9 upstream source adapters (ARC Prize, HLE, GPQA Diamond, GDPval, RLI, APEX-Agents, OSWorld, RE-Bench, SWE-bench)
+- ✅ Live attestation pipeline with HTTP fetching, filesystem caching, concurrent requests
+- ✅ First verdict generated (Claude 3.5 Sonnet)
+- ✅ 15 critical/high/medium code review findings remediated
+- ✅ 5 crates published to crates.io (agi4, agi4-core, agi4-schema, agi4-adapters, agi4-report)
+- ✅ Spec compliance: variance bounds check fixed (single-pool per SPEC.md §4 rule 2)
+- ✅ Safety: removed panic-prone Default impl from CachingFetcher
+- ✅ Correctness: evidence output now populated in verdicts, error handling unified
+- ✅ Documentation: workspace README, per-crate CHANGELOG.md, independent versioning
+
+### Next: Phase 3 (v0.1.2 → Calibration)
+Start calibration work with first live verdicts from frontier models (Task 3.1).
 
 ---
 
