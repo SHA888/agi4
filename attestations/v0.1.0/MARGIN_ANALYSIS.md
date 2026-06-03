@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-Five verdicts analyzed across the AGI/4 conjuncts to understand threshold positioning and identify calibration opportunities. Key finding: thresholds are positioned such that only the strongest current models (Claude 3.5 Sonnet) achieve full attestation. Three common failure modes identified.
+Five verdicts analyzed across the AGI/4 conjuncts to understand threshold positioning and identify calibration opportunities. Key finding: thresholds are positioned such that only the strongest current models (Claude 3.5 Sonnet and Claude Opus 4) achieve full attestation. Three common failure modes identified.
 
 ---
 
@@ -82,7 +82,7 @@ Document data availability constraints. Consider requiring minimum coverage thre
 
 ### Generality Conjunct
 - **Status:** Moderate tightness
-- **Evidence:** All 5 models pass (4/4 pass conjunct)
+- **Evidence:** 5/5 pass (all models pass)
 - **Implication:** Threshold may be set to pass most capable models; may not be strong enough to distinguish true generality
 - **Question for Phase 3.2:** Should ARC-AGI-3 pass rate be higher (e.g., 90% vs 85%)?
 
@@ -99,9 +99,9 @@ Document data availability constraints. Consider requiring minimum coverage thre
 - **Assessment:** Appropriate tightness; NES gap (noted in task 4.1) affects this conjunct
 
 ### Autonomous Agency Conjunct
-- **Status:** Very tight
-- **Evidence:** 2/5 pass; Gemini fails by largest margin (~40%)
-- **Implication:** Long-horizon autonomous work is the strongest conjunct filter
+- **Status:** Tight
+- **Evidence:** 3/5 pass (claude-3.5-sonnet, claude-opus-4, gpt-4-turbo)
+- **Implication:** Long-horizon autonomous work is a meaningful constraint; models with weak long-horizon capability cannot attest
 - **Question for Phase 3.2:** Is 168 hours (METR threshold) the right long-horizon boundary?
 
 ---
@@ -121,19 +121,22 @@ The three consistency rules (SPEC.md §4) are not currently filtering any verdic
 
 ## Key Findings for Phase 3.2
 
-1. **Economic and Autonomous Agency are tightest filters.**
-   Only models with strong long-horizon and economic capabilities attest.
+1. **Economic Substitutability is the tightest filter (2/5 pass).**
+   Only Claude 3.5 Sonnet and Claude Opus 4 achieve this threshold.
 
-2. **Environmental Transfer and Generality are looser.**
-   Most capable models pass these; they are not discriminating.
+2. **Autonomous Agency and Environmental Transfer are equally tight (3/5 pass each).**
+   These conjuncts distinguish most capable models from frontier leaders.
 
-3. **Data availability is a real constraint.**
+3. **Generality is the loosest constraint (5/5 pass).**
+   All models in the sample pass; this conjunct does not discriminate.
+
+4. **Data availability is a real constraint.**
    Verdicts depend on comprehensive upstream coverage. Incomplete benchmark presence → insufficient verdict.
 
-4. **Conjunction is working as intended.**
+5. **Conjunction is working as intended.**
    Models cannot attest if weak in any dimension; this is the design.
 
-5. **Threshold margins (gaps of 20–40%) suggest appropriate calibration.**
+6. **Threshold margins (gaps of 20–40%) suggest appropriate calibration.**
    Gap sizes are realistic relative to model capability differences.
 
 ---
