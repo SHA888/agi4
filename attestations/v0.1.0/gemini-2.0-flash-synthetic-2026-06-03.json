@@ -1,0 +1,45 @@
+{
+  "spec_version": "0.1.0",
+  "runner_version": "0.1.1",
+  "run_timestamp": "2026-06-03T13:22:00Z",
+  "model": {
+    "id": "gemini-2.0-flash",
+    "provider": "google",
+    "version_or_date": "synthetic analysis fixture"
+  },
+  "conjuncts": {
+    "generality": {
+      "status": "pass",
+      "margins": null
+    },
+    "economic_substitutability": {
+      "status": "partial",
+      "margins": null
+    },
+    "environmental_transfer": {
+      "status": "partial",
+      "margins": null
+    },
+    "autonomous_agency": {
+      "status": "fail",
+      "margins": null
+    }
+  },
+  "consistency_check": {
+    "status": "pass",
+    "detail": null
+  },
+  "verdict": "not_attested",
+  "verdict_reasons": [
+    "Generality: pass",
+    "Economic Substitutability: partial (below threshold)",
+    "Environmental Transfer: partial (below threshold)",
+    "Autonomous Agency: fail (well below threshold)",
+    "Consistency Check: pass",
+    "Overall: fails conjunctive requirement (multiple conjuncts below threshold)"
+  ],
+  "known_gaps_acknowledged": [
+    "Synthetic fixture for margin analysis - demonstrates multi-conjunct failure case",
+    "NES (Novel-Environment Subset) underspecified; accepting evidence but not evaluating"
+  ]
+}

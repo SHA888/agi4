@@ -1,0 +1,44 @@
+{
+  "spec_version": "0.1.0",
+  "runner_version": "0.1.1",
+  "run_timestamp": "2026-06-03T13:20:00Z",
+  "model": {
+    "id": "claude-opus-4",
+    "provider": "anthropic",
+    "version_or_date": "synthetic analysis fixture"
+  },
+  "conjuncts": {
+    "generality": {
+      "status": "pass",
+      "margins": null
+    },
+    "economic_substitutability": {
+      "status": "pass",
+      "margins": null
+    },
+    "environmental_transfer": {
+      "status": "pass",
+      "margins": null
+    },
+    "autonomous_agency": {
+      "status": "pass",
+      "margins": null
+    }
+  },
+  "consistency_check": {
+    "status": "pass",
+    "detail": null
+  },
+  "verdict": "attested",
+  "verdict_reasons": [
+    "Generality: pass",
+    "Economic Substitutability: pass",
+    "Environmental Transfer: pass",
+    "Autonomous Agency: pass",
+    "Consistency Check: pass"
+  ],
+  "known_gaps_acknowledged": [
+    "Synthetic fixture for margin analysis - upstream sources lack live data for this model",
+    "NES (Novel-Environment Subset) underspecified; accepting evidence but not evaluating"
+  ]
+}
