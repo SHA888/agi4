@@ -116,7 +116,7 @@ For each upstream source, the spec specifies: the measurement, the required reli
 
 **v0.1.0 status: calibration values.** These numbers are starting points selected from the 2026 landscape diagnosis. They will move in v0.1.x patches as evidence accumulates. v0.2.0 will lock the first stable threshold set.
 
-**v0.1.2 status (Task 3.2):** Thresholds remain unchanged. Verdict-impact analysis across five frontier and near-frontier models (Claude 3.5 Sonnet, Claude Opus 4, GPT-4-Turbo, Gemini 2.0 Flash, Llama 3 70B) confirms current thresholds are well-calibrated for stated diagnostic intent with 15–68% realistic margins between passing and failing models. See `attestations/v0.1.0/THRESHOLD_ANALYSIS.md` for detailed per-conjunct assessment.
+**v0.1.2 status (Task 3.2):** Thresholds remain unchanged. Verdict-impact analysis across five frontier and near-frontier models (Claude 3.5 Sonnet, Claude Opus 4, GPT-4-Turbo, Gemini 2.0 Flash, Llama 3 70B) confirms current thresholds are well-calibrated for stated diagnostic intent with 15–68h realistic margins between passing and failing models (percentage gaps in GDPval/RLI; hour gaps in METR). See `attestations/v0.1.0/THRESHOLD_ANALYSIS.md` for detailed per-conjunct assessment.
 
 ### 3.1 Generality thresholds
 
