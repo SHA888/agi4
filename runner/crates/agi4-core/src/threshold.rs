@@ -3,6 +3,9 @@
 //! Every threshold and floor in the specification lives here as a named const.
 //! No magic numbers in evaluation logic. Every value here maps to exactly one
 //! source line in SPEC.md.
+//!
+//! v0.1.2 review (Task 3.2): All thresholds affirmed against five frontier and near-frontier
+//! model verdicts. No changes recommended. See attestations/v0.1.0/THRESHOLD_ANALYSIS.md.
 
 pub mod generality {
     pub const ARC_AGI_2_PASS: f64 = 0.85;
