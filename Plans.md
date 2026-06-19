@@ -129,7 +129,7 @@ below. Severity: **C**ritical / **H**igh / **M**edium / **L**ow.
 | 3.2 | Analyze threshold looseness/tightness vs. diagnostic intent | Tabulation complete, threshold movement recommendations documented | 3.1 | cc:done [48d1af0] |
 | 3.3 | Update SPEC.md thresholds and corresponding code constants | Spec and `threshold.rs` updated in sync, verdict-impact analysis included | 3.2 | cc:done [688b908] |
 | 3.4 | Re-attest same models under v0.1.2, commit new verdicts | Five verdicts committed alongside v0.1.0 verdicts | 3.3 | cc:done [376e82c] |
-| 3.5 | Document threshold movements in CHANGELOG.md | CHANGELOG records rationale for each threshold change | 3.4 | cc:TODO |
+| 3.5 | Document threshold movements in CHANGELOG.md | CHANGELOG records rationale for each threshold change | 3.4 | cc:done [3f7f9b7] |
 
 ---
 
