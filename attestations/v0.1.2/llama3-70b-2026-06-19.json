@@ -1,0 +1,43 @@
+{
+  "spec_version": "0.1.0",
+  "runner_version": "0.1.1",
+  "run_timestamp": "2026-06-19T06:43:20Z",
+  "model": {
+    "id": "llama3-70b",
+    "provider": null,
+    "version_or_date": null
+  },
+  "conjuncts": {
+    "generality": {
+      "status": "insufficientdata",
+      "margins": null
+    },
+    "economic_substitutability": {
+      "status": "insufficientdata",
+      "margins": null
+    },
+    "environmental_transfer": {
+      "status": "insufficientdata",
+      "margins": null
+    },
+    "autonomous_agency": {
+      "status": "insufficientdata",
+      "margins": null
+    }
+  },
+  "consistency_check": {
+    "status": "pass",
+    "detail": null
+  },
+  "verdict": "not_attested",
+  "verdict_reasons": [
+    "Generality: insufficientdata",
+    "Economic Substitutability: insufficientdata",
+    "Environmental Transfer: insufficientdata",
+    "Autonomous Agency: insufficientdata",
+    "Consistency Check: pass"
+  ],
+  "known_gaps_acknowledged": [
+    "NES (Novel-Environment Subset) underspecified; accepting evidence but not evaluating"
+  ]
+}
