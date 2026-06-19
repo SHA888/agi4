@@ -4,6 +4,49 @@ All notable changes to the agi4 project are documented in this file.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-06-19
+
+### Changed
+
+#### Thresholds (Calibration Phase 3 Complete)
+- All threshold values reviewed and **confirmed stable** under v0.1.2. No movements justified by verdict analysis across five frontier and near-frontier models
+  - Generality conjunct thresholds (ARC-AGI-2, ARC-AGI-3, HLE, GPQA-Diamond) remain unchanged; all models exceed thresholds by 20–40% margins
+  - Economic substitutability thresholds (GDPval, RLI, APEX-Agents) remain unchanged; correctly discriminate frontier-capable (Claude 3.5 Sonnet, Claude Opus 4) from capable-but-not-frontier models
+  - Environmental transfer and autonomous agency thresholds remain unchanged; margins adequate for future capability growth
+  - See `attestations/v0.1.2/THRESHOLD_ANALYSIS.md` for detailed margin analysis and rationale
+
+#### Verdict Logic (Code Review Fixes)
+- Verdict enum now correctly returns "insufficient_data" when any conjunct lacks evidence (previously returned "not_attested", conflating failure with no-evidence case)
+- ConjunctStatus serialization now uses snake_case naming per JSON schema: "insufficient_data" (previously serialized as "insufficientdata" without underscore)
+- Consistency check now includes detail message when passing vacuously (zero evidence), clarifying that the check was skipped rather than meaningfully validated
+
+#### Markdown Reporting
+- Verdict reasons list now excludes passing conditions (only includes failing/insufficient), preventing contradictory statements like "Consistency Check: pass" under a non-attested verdict
+
+### Added
+
+#### Runner Improvements
+- Model metadata now populated for known frontier models: provider (Anthropic, OpenAI, Google, Meta) and version_or_date for all five models in v0.1.2 attestations
+- v0.1.2 attestations committed for five frontier models alongside v0.1.0 verdicts
+  - Claude 3.5 Sonnet (Anthropic, 2024-06)
+  - Claude Opus 4 (Anthropic, 2024-11)
+  - GPT-4-Turbo (OpenAI, 2024-04)
+  - Gemini 2.0 Flash (Google, 2024-12)
+  - Llama3-70B (Meta, 2024-04)
+  - See `attestations/v0.1.2/` for v0.1.2 verdicts with corrected output format
+
+### Fixed
+
+#### Schema Compliance (Blocking Code Review Findings)
+- Fixed ConjunctStatus enum serialization to emit "insufficient_data" with underscore (schema-compliant) instead of "insufficientdata" via explicit match statement
+- Fixed verdict output to use correct top-level verdict enum: "insufficient_data" for no-evidence case (previously conflated with "not_attested")
+
+#### Version Alignment
+- Facade crate `agi4` version bumped from 0.1.1 to 0.1.2, now matching v0.1.2 attestation outputs and spec calibration phase
+- All verdicts and runner versions now report 0.1.2 consistently
+
+---
+
 ## [0.1.1] - 2026-06-02
 
 ### Fixed
