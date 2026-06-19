@@ -16,9 +16,15 @@ use agi4_schema::{
 };
 use chrono::Utc;
 
-/// Convert a ConjunctStatus to its lowercase string representation for output.
+/// Convert a ConjunctStatus to its string representation for output.
+/// Uses snake_case naming per the output schema.
 fn status_to_string(status: ConjunctStatus) -> String {
-    format!("{:?}", status).to_lowercase()
+    match status {
+        ConjunctStatus::Pass => "pass".to_string(),
+        ConjunctStatus::Partial => "partial".to_string(),
+        ConjunctStatus::Fail => "fail".to_string(),
+        ConjunctStatus::InsufficientData => "insufficient_data".to_string(),
+    }
 }
 
 /// Perform live attestation by fetching from upstream sources and evaluating evidence.
@@ -34,6 +40,16 @@ pub fn attest_live(model_id: &str) -> Result<VerdictOutput, Box<dyn std::error::
 
     let now = Utc::now();
     let run_timestamp = now.to_rfc3339_opts(chrono::SecondsFormat::Secs, true);
+
+    // Map known models to their providers and versions
+    let (provider, version_or_date) = match model_id {
+        "claude-3.5-sonnet" => (Some("Anthropic"), Some("2024-06")),
+        "claude-opus-4" => (Some("Anthropic"), Some("2024-11")),
+        "gpt-4-turbo" => (Some("OpenAI"), Some("2024-04")),
+        "gemini-2.0-flash" => (Some("Google"), Some("2024-12")),
+        "llama3-70b" => (Some("Meta"), Some("2024-04")),
+        _ => (None, None),
+    };
 
     // TASK 2.15 TODO: Fetch evidence from upstream sources via CachingFetcher + adapters.
     // The architecture is in place (evaluators + consistency_check below), but evidence
@@ -52,10 +68,22 @@ pub fn attest_live(model_id: &str) -> Result<VerdictOutput, Box<dyn std::error::
     let conjunct_statuses = [generality_status, econ_status, env_status, agency_status];
 
     // Run consistency check with real evidence
-    let consistency_result = consistency_check(&all_evidence, &conjunct_statuses);
+    let mut consistency_result = consistency_check(&all_evidence, &conjunct_statuses);
+
+    // If evidence is empty, note that the consistency check is vacuous
+    if all_evidence.is_empty() && consistency_result.passed {
+        consistency_result.detail = Some(
+            "Consistency check passed vacuously (no evidence available to check). \
+             When all conjuncts are InsufficientData, no meaningful consistency validation occurs."
+                .to_string(),
+        );
+    }
 
     // Build verdict: all 4 conjuncts must pass AND consistency check must pass
-    let overall_verdict = if conjunct_statuses.iter().all(|s| *s == ConjunctStatus::Pass)
+    // If any conjunct is InsufficientData, the overall verdict is insufficient_data
+    let overall_verdict = if conjunct_statuses.contains(&ConjunctStatus::InsufficientData) {
+        "insufficient_data"
+    } else if conjunct_statuses.iter().all(|s| *s == ConjunctStatus::Pass)
         && consistency_result.passed
     {
         "attested"
@@ -86,7 +114,8 @@ pub fn attest_live(model_id: &str) -> Result<VerdictOutput, Box<dyn std::error::
         }
     }
 
-    let verdict_reasons = vec![
+    // Build verdict reasons: include all conjuncts, and only include consistency check if it failed
+    let mut verdict_reasons = vec![
         format!("Generality: {}", status_to_string(generality_status)),
         format!(
             "Economic Substitutability: {}",
@@ -94,15 +123,12 @@ pub fn attest_live(model_id: &str) -> Result<VerdictOutput, Box<dyn std::error::
         ),
         format!("Environmental Transfer: {}", status_to_string(env_status)),
         format!("Autonomous Agency: {}", status_to_string(agency_status)),
-        format!(
-            "Consistency Check: {}",
-            if consistency_result.passed {
-                "pass"
-            } else {
-                "fail"
-            }
-        ),
     ];
+
+    // Only include consistency check in reasons if it failed
+    if !consistency_result.passed {
+        verdict_reasons.push("Consistency Check: fail".to_string());
+    }
 
     let verdict_output = VerdictOutput {
         spec_version: crate::SPEC_VERSION.to_string(),
@@ -110,8 +136,8 @@ pub fn attest_live(model_id: &str) -> Result<VerdictOutput, Box<dyn std::error::
         run_timestamp,
         model: ModelMetadata {
             id: model_id.to_string(),
-            provider: None,
-            version_or_date: None,
+            provider: provider.map(|s| s.to_string()),
+            version_or_date: version_or_date.map(|s| s.to_string()),
         },
         conjuncts: ConjunctsOutput {
             generality: ConjunctReport {

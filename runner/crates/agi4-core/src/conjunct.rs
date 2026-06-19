@@ -13,6 +13,7 @@ pub enum Conjunct {
 
 /// Per-conjunct status after evaluation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ConjunctStatus {
     Pass,
     Partial,

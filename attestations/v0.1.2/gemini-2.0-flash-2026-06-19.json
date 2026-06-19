@@ -1,41 +1,40 @@
 {
   "spec_version": "0.1.0",
-  "runner_version": "0.1.1",
-  "run_timestamp": "2026-06-19T06:43:20Z",
+  "runner_version": "0.1.2",
+  "run_timestamp": "2026-06-19T06:56:48Z",
   "model": {
     "id": "gemini-2.0-flash",
-    "provider": null,
-    "version_or_date": null
+    "provider": "Google",
+    "version_or_date": "2024-12"
   },
   "conjuncts": {
     "generality": {
-      "status": "insufficientdata",
+      "status": "insufficient_data",
       "margins": null
     },
     "economic_substitutability": {
-      "status": "insufficientdata",
+      "status": "insufficient_data",
       "margins": null
     },
     "environmental_transfer": {
-      "status": "insufficientdata",
+      "status": "insufficient_data",
       "margins": null
     },
     "autonomous_agency": {
-      "status": "insufficientdata",
+      "status": "insufficient_data",
       "margins": null
     }
   },
   "consistency_check": {
     "status": "pass",
-    "detail": null
+    "detail": "Consistency check passed vacuously (no evidence available to check). When all conjuncts are InsufficientData, no meaningful consistency validation occurs."
   },
-  "verdict": "not_attested",
+  "verdict": "insufficient_data",
   "verdict_reasons": [
-    "Generality: insufficientdata",
-    "Economic Substitutability: insufficientdata",
-    "Environmental Transfer: insufficientdata",
-    "Autonomous Agency: insufficientdata",
-    "Consistency Check: pass"
+    "Generality: insufficient_data",
+    "Economic Substitutability: insufficient_data",
+    "Environmental Transfer: insufficient_data",
+    "Autonomous Agency: insufficient_data"
   ],
   "known_gaps_acknowledged": [
     "NES (Novel-Environment Subset) underspecified; accepting evidence but not evaluating"
