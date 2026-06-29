@@ -3,8 +3,8 @@
 Project task tracking for AGI/4 attestation protocol reference runner.
 
 **Created:** 2026-05-26
-**Current Phase:** v0.1.1 (Real adapters, code review fixes, published to crates.io)
-**Latest:** 2026-06-02 — Phase 2 complete, all crates published at v0.1.1
+**Current Phase:** v0.1.2 (Calibration complete, thresholds verified)
+**Latest:** 2026-06-29 — Phase 3 complete, v0.1.2 released to GitHub and crates.io
 
 ---
 
@@ -121,6 +121,12 @@ below. Severity: **C**ritical / **H**igh / **M**edium / **L**ow.
 
 ## Phase 3: v0.1.2 — Calibration Based on First Attestation
 
+**Status: ✅ COMPLETE** (2026-06-29)
+- Five frontier models re-attested under revised thresholds (3.1–3.4)
+- Threshold movements documented in CHANGELOG.md (3.5)
+- v0.1.2 tagged and released to GitHub (2026-06-29)
+- All five crates published to crates.io at v0.1.2 (2026-06-29)
+
 **Goal:** Refine thresholds based on first verdicts, recalibrate spec.
 
 | Task | Scope | DoD | Depends | Status |
@@ -139,7 +145,7 @@ below. Severity: **C**ritical / **H**igh / **M**edium / **L**ow.
 
 | Task | Scope | DoD | Depends | Status |
 |------|-------|-----|---------|--------|
-| 4.1 | Survey candidate benchmarks for NES | Document interactive environments with no training-time analogues | 3.5 | cc:TODO |
+| 4.1 | Survey candidate benchmarks for NES | Document interactive environments with no training-time analogues | 3.5 | cc:done [research-complete] |
 | 4.2 | Define NES acceptance criteria in SPEC.md | Spec §8 updated with NES definition and refresh policy | 4.1 | cc:TODO |
 | 4.3 | Implement NES adapter(s) | Adapter(s) round-trip test pass | 4.2 | cc:TODO |
 | 4.4 | Decide spec bump (0.1.3 vs 0.2.0 early) and re-attest | Verdicts under new spec committed | 4.3 | cc:TODO |
