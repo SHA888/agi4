@@ -139,7 +139,7 @@ below. Severity: **C**ritical / **H**igh / **M**edium / **L**ow.
 
 ---
 
-## Phase 4: v0.1.3 — Gap Closure (NES Specification)
+## Phase 4: v0.2.0 — Gap Closure (NES Specification)
 
 **Goal:** Close largest known gap: NES (Novel-Environment Subset).
 
@@ -148,7 +148,7 @@ below. Severity: **C**ritical / **H**igh / **M**edium / **L**ow.
 | 4.1 | Survey candidate benchmarks for NES | Document interactive environments with no training-time analogues | 3.5 | cc:done [research-complete] |
 | 4.2 | Define NES acceptance criteria in SPEC.md | Spec §8 updated with NES definition and refresh policy | 4.1 | cc:TODO |
 | 4.3 | Implement NES adapter(s) | Adapter(s) round-trip test pass | 4.2 | cc:TODO |
-| 4.4 | Decide spec bump (0.1.3 vs 0.2.0 early) and re-attest | Verdicts under new spec committed | 4.3 | cc:TODO |
+| 4.4 | Execute MAJOR spec bump to 0.2.0 (settled by Task 4.2 — conjunct logic + threshold value change) and re-attest | Verdicts under new spec committed | 4.3 | cc:TODO |
 
 ---
 

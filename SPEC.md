@@ -77,18 +77,32 @@ For each upstream source, the spec specifies: the measurement, the required reli
 | Source | Measurement | Operator | Reliability | Saturation watch |
 |---|---|---|---|---|
 | ARC-AGI-3 | Interactive task private split (cross-listed with §2.1) | ARC Prize Foundation | 80% (exploration variance) | ≥85% |
-| OSWorld | Task completion rate with no domain-specific scaffolding | Independent | 80% | ≥85% |
-| Novel-environment subset (NES) | TBD — held-out interactive environments with no training-time analogues | Spec-designated | 80% | ≥75% |
+| OSWorld | Task completion rate with no domain-specific scaffolding | METR / Independent | 80% | ≥85% |
+| WebArena | Web browser interaction task success rate | Stanford / Independent | 80% | ≥75% |
+| SWE-bench Verified | Software engineering task pass@1 rate | METR / Independent | 80% | ≥75% |
+| ARIES | AI research task completion score (0–100 rubric) | Independent | 85% | ≥75% |
 
-**Minimum evidence:** ARC-AGI-3 result is required. At least one of OSWorld or NES must also have a published result.
+**NES (Novel-Environment Subset) definition:** A benchmark qualifies as NES if it satisfies all five criteria:
 
-**Note on NES:** The Novel-Environment Subset is currently underspecified in v0.1.0. v0.1.x will specify the exact set of environments accepted as satisfying NES. Until then, NES is treated as `insufficient_data` if no other interactive-novel benchmark is available. This is a known gap, tracked explicitly in `TODO.md`.
+1. **Interactive** — Agent must act in an environment where actions produce observable state changes. Not static QA/reading comprehension.
+2. **Held-Out Novelty** — Task distribution unknown during model training. Operationally: benchmark released/updated after model training cutoff, OR task instances procedurally generated with infinite support not in training data.
+3. **Measurable** — Success is quantifiable as pass/fail (binary) or score (0–100). Not subjective judgment.
+4. **Public Data** — Benchmark data and/or leaderboard publicly available without paywalls.
+5. **Frontier Model Evidence** — At least one frontier model (Claude 3.5 Sonnet, GPT-4 Turbo, Gemini 2.0 Flash) has public or peer-reviewed performance data.
+
+**v0.1.3+ NES sources:** WebArena, SWE-bench Verified, and ARIES satisfy the five criteria and are accepted as NES sources in v0.1.3+. Additional NES sources may be added in future MINOR bumps without changing verdict semantics, provided they satisfy the five criteria above and their thresholds are set per calibration verdicts. Accepted NES sources are not permanent — see the NES source refresh policy in §6 for how novelty is re-checked and sources are retired or replaced.
+
+**Minimum evidence:** ARC-AGI-3 result is required. Both OSWorld and at least one NES source must also have a published result.
+
+**Rationale for requiring both OSWorld and NES:** OSWorld tests realistic desktop/web task sequences. NES sources (WebArena, SWE-bench Verified, ARIES) test specialized interactive environments (web, code, research). Together they triangulate broad environmental transfer. Requiring both minimizes false attestations; either alone is gameable.
 
 **Conjunct status mapping:**
-- `pass` — ARC-AGI-3 ≥ threshold AND (OSWorld or NES) ≥ threshold
-- `partial` — ARC-AGI-3 above floor but below threshold, OR ARC-AGI-3 passes but no secondary source passes
-- `fail` — ARC-AGI-3 below the fluid-transfer floor
+- `pass` — ARC-AGI-3 ≥ threshold AND OSWorld ≥ threshold AND at least one NES source ≥ threshold
+- `fail` — ARC-AGI-3 below its floor, OR OSWorld below its floor, OR every present NES source is below its own floor
+- `partial` — none of the `fail` conditions hold (ARC-AGI-3, OSWorld, and at least one NES source each clear their own floor), but the `pass` condition is not met
 - `insufficient_data` — minimum evidence requirement unmet
+
+This ordering is exhaustive: `fail` is checked first (any required source below its own floor), then `pass`, with everything else falling to `partial`.
 
 ### 2.4 Autonomous long-horizon agency
 
@@ -142,8 +156,12 @@ For each upstream source, the spec specifies: the measurement, the required reli
 | Source | Pass threshold | Floor |
 |---|---|---|
 | ARC-AGI-3 | ≥50% (cross-listed with §3.1) | <5% (fluid-transfer floor) |
-| OSWorld | ≥85% with no domain-specific scaffolding | n/a |
-| NES | TBD in v0.1.x | TBD |
+| OSWorld | ≥20% task completion rate | <3% |
+| WebArena | ≥20% task success rate | <5% |
+| SWE-bench Verified | ≥25% pass@1 rate | <5% |
+| ARIES | ≥60/100 task score (rubric-normalized) | <30/100 |
+
+**Rationale for NES thresholds (v0.1.3 calibration):** Thresholds derived from frontier model performance across 2024–2025 benchmarks. WebArena and SWE-bench Verified cluster frontier models at 15–35%; pass thresholds set to 20–25% to avoid gaming by saturation. ARIES scores higher (60–75) due to task-selection bias; 60/100 pass threshold ensures diagnostic signal. OSWorld threshold revised downward from 85% (unrealistic) to 20% (achievable by strong models) based on v0.1.2 calibration verdicts. All NES thresholds will be revisited after first v0.1.3 verdicts if diagnostic margins are <10% or >50%.
 
 ### 3.4 Autonomous agency thresholds
 
@@ -197,6 +215,13 @@ The runner emits the verdict mechanically from this table. No other code path pr
 
 **Time-bounded calibration:** v0.1.x is calibration. v0.2.0 must lock a stable threshold set no later than four quarters after v0.1.0, regardless of remaining open issues. The longer v0.1.x extends, the weaker the spec's stability claim.
 
+**NES source refresh policy:** An accepted NES source (§2.3) satisfies criterion 2 (Held-Out Novelty) only for a bounded window, not permanently. At each quarterly attestation cycle, every accepted NES source is re-checked against criterion 2:
+
+- If a source's task distribution has become part of mainstream pretraining data (e.g., the benchmark is scraped into a public pretraining corpus, or a paper reports contamination), it no longer satisfies Held-Out Novelty and is removed from the accepted-NES-source list.
+- If removal would drop the environmental transfer conjunct below the minimum-evidence requirement in §2.3 (no accepted NES source remaining), the conjunct falls back to `insufficient_data` for the NES component until a replacement source is approved.
+- Adding or removing an NES source is a MINOR bump (source added or removed with backward-compatible diagnostic output), per the SemVer policy above — it does not require a MAJOR bump unless it also changes the conjunct's pass/fail logic.
+- Tier-2 candidates surveyed in `docs/nes-candidates.md` (LLMOE, ENVGEN, VirtualHome, IsaacLab) are promoted to accepted NES sources once they satisfy all five §2.3 criteria, including sufficient frontier-model evaluation data; until then they remain out of scope (tracked in §8, gap 1).
+
 ---
 
 ## 7. Provenance requirements
@@ -213,14 +238,14 @@ A verdict missing any of these for any cited source is malformed and must not be
 
 ---
 
-## 8. Known gaps (v0.1.0)
+## 8. Known gaps (v0.1.3+)
 
 These are explicitly tracked and do not block the spec from being usable; they bound what it can attest.
 
-1. **NES (Novel-Environment Subset) underspecified.** Until v0.1.x specifies the accepted environment set, the environmental transfer conjunct relies on ARC-AGI-3 + OSWorld.
+1. **NES (Novel-Environment Subset) specified in v0.1.3+.** Environmental transfer now requires ARC-AGI-3 + OSWorld + at least one NES source (WebArena, SWE-bench Verified, ARIES, or future-approved sources satisfying §2.3 criteria). v0.2.0 will close the remaining gap: Tier-2 NES candidates (LLMOE, ENVGEN, VirtualHome, IsaacLab) lack sufficient frontier-model eval data and will be added once lab adoption increases.
 2. **No non-verifiable-domain measurement for autonomous agency.** Current upstream sources (RE-Bench, SWE-bench Verified) test verifiable-domain self-improvement. The "AI research itself" subclause of conjunct 4 includes open-ended research with subjective evaluation, which no public benchmark currently measures at sufficient quality. Until one exists, the spec attests only the verifiable-domain portion of the conjunct, and this limitation is explicitly noted in every verdict for conjunct 4.
-3. **Multimodal coverage is partial.** Several upstream sources are text-first. Vision, audio, and embodied benchmarks are not yet integrated.
-4. **Adversarial regeneration assumed but not enforced.** The spec assumes upstream sources maintain held-out splits and contamination resistance. v0.1.x will add explicit acceptance criteria for upstream sources covering this.
+3. **Multimodal coverage is partial.** Several upstream sources are text-first. Vision, audio, and embodied benchmarks are not yet integrated. v0.2.0 will add IsaacLab and other embodied benchmarks if LLM eval data improves.
+4. **Adversarial regeneration assumed but not enforced.** The spec assumes upstream sources maintain held-out splits and contamination resistance. v0.2.0 will add explicit acceptance criteria for upstream sources covering this.
 
 Each known gap is a `TODO.md` entry with a target version.
 

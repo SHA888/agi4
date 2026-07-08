@@ -240,15 +240,16 @@
 
 **Goal:** Close the largest known gap from SPEC.md §8: NES (Novel-Environment Subset).
 
-- [ ] **Survey candidate benchmarks for NES.**
+- [x] **Survey candidate benchmarks for NES.** (`docs/nes-candidates.md`)
   - Interactive environments with no training-time analogues.
   - Candidates: ARC-AGI-3 (already used), held-out subset of OSWorld, newer interactive benchmarks released since v0.1.0.
-- [ ] **Define NES acceptance criteria in SPEC.md.**
-  - What makes a benchmark eligible for inclusion in NES.
-  - Refresh policy when an environment is no longer novel.
+- [x] **Define NES acceptance criteria in SPEC.md.** (SPEC.md §2.3)
+  - What makes a benchmark eligible for inclusion in NES: five-point filter (Interactive, Held-Out Novelty, Measurable, Public Data, Frontier Model Evidence).
+  - Refresh policy when an environment is no longer novel: SPEC.md §6, "NES source refresh policy" — re-checked every quarterly attestation cycle, retired on contamination, MINOR bump to add/remove.
 - [ ] **Implement NES adapter(s).**
-- [ ] **Spec bump.**
-  - MINOR bump (`agi4` to `0.2.0`? or `0.1.3` if backward-compatible — decide based on whether NES becomes required evidence or remains supplementary).
+- [ ] **Spec bump: MAJOR (`agi4` to `0.2.0`).**
+  - Settled by Task 4.2: NES becomes required evidence (environmental transfer conjunct changes from ARC-AGI-3 + (OSWorld OR NES) to ARC-AGI-3 AND OSWorld AND ≥1 NES source), and OSWorld's pass threshold is loosened (85% → 20%). Both are MAJOR-bump triggers under SPEC.md's own SemVer policy — not a MINOR/`0.1.3` case.
+  - Task 4.4 executes the bump to `0.2.0` after Task 4.3's adapters land and re-attestation confirms verdict impact (see CHANGELOG.md `[Unreleased]`).
 - [ ] **Re-attest existing models under the new spec.**
 
 ### v0.1.3 release gate

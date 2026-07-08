@@ -26,7 +26,9 @@ pub mod environmental_transfer {
     pub const ARC_AGI_3_PASS: f64 = 0.50;
     pub const ARC_AGI_3_FLOOR: f64 = 0.05;
     pub const OSWORLD_PASS: f64 = 0.85;
-    // NES thresholds: TBD in v0.1.x
+    // NES defined in SPEC.md §2.3/§3.3 (Task 4.2): WebArena, SWE-bench Verified, ARIES.
+    // Constants land with adapter implementation (Task 4.3) and the spec-bump
+    // decision (Task 4.4), which also revisits OSWORLD_PASS per §3.3.
 }
 
 pub mod autonomous_agency {

@@ -4,6 +4,35 @@ All notable changes to the agi4 project are documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+#### NES (Novel-Environment Subset) Specification (v0.1.3 spec candidate — not yet implemented)
+- Environmental transfer conjunct now specifies NES acceptance criteria (5-point filter):
+  - **Interactive** — Agent acts in environment; not static QA
+  - **Held-Out Novelty** — Task distribution unknown during training
+  - **Measurable** — Quantitative pass/fail or score
+  - **Public Data** — Leaderboard or published results publicly available
+  - **Frontier Model Evidence** — At least one frontier model has public performance
+- **NES sources approved, pending adapter implementation (Task 4.3):**
+  - WebArena (Stanford) — Web browser interaction; 20% pass threshold
+  - SWE-bench Verified (METR) — Software engineering; 25% pass threshold
+  - ARIES (Independent) — AI research tasks; 60/100 pass threshold
+- **OSWorld threshold revised (spec text only; `threshold.rs` still enforces 85% pending Task 4.4):** 85% → 20% task completion rate
+  - Rationale: 85% is unrealistic (no frontier models achieved it); calibrated to observed frontier performance (12–20%) from v0.1.2 attestations
+- **Environmental transfer conjunct logic changed:** Now requires ARC-AGI-3 AND OSWorld AND at least one NES source (spec text only; `evaluators.rs` still implements the v0.1.2 OR-style gate pending Task 4.3/4.4)
+  - Previous: ARC-AGI-3 + (OSWorld OR NES); OSWorld effectively required since NES was TBD
+  - New: ARC-AGI-3 + OSWorld + at least one NES; both OSWorld and NES required for environmental transfer `pass`
+  - Rationale: Two sources (realistic OS tasks + specialized interactive environments) minimize false attestations; provides complementary evidence (desktop/web + web/code)
+
+#### Verdict Impact Summary (Estimated, Pending Full Re-attestation)
+- **Claude 3.5 Sonnet:** Likely improves (strong on all sources, passes OSWorld at 20%, passes WebArena/SWE-bench/ARIES)
+- **Claude Opus 4:** Likely improves (passes OSWorld at 20%, passes SWE-bench Verified and ARIES)
+- **GPT-4-Turbo:** Mixed (passes OSWorld loosened threshold, but may not pass WebArena)
+- **Gemini 2.0 Flash:** Mixed (passes new NES thresholds, but OSWorld 20% may be borderline)
+- **Llama 3 70B:** Likely worsens (fails OSWorld and most NES sources)
+
+**SemVer bump: MAJOR (v0.2.0), per SPEC.md's own policy.** The environmental transfer conjunct's OR→AND logic change is a conjunct-definition change, and the OSWorld threshold moves from 85% to 20% — a loosening, not the "tightened" case the MINOR carve-out requires. Both independently satisfy "MAJOR — conjunct definitions or threshold values change" (SPEC.md, SemVer policy). Task 4.4 executes this as a MAJOR bump to v0.2.0 once Task 4.3's adapters land and re-attestation confirms the estimates above; it is not a MINOR-vs-MAJOR decision to relitigate.
+
 ## [0.1.2] - 2026-06-19
 
 ### Changed
